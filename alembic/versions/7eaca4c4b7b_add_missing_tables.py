@@ -20,40 +20,65 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Create enum types
-    teaching_style_enum = sa.Enum('EXPOSITORY', 'TOPICAL', 'NARRATIVE', 'BALANCED', name='teachingstyle')
-    teaching_style_enum.create(op.get_bind())
+    # Create enum types only if they don't exist
+    connection = op.get_bind()
     
-    bible_approach_enum = sa.Enum('LITERAL', 'ALLEGORICAL', 'MORAL', 'ANAGOGICAL', 'BALANCED', name='bibleapproach')
-    bible_approach_enum.create(op.get_bind())
+    # Check if teachingstyle enum exists
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM pg_type WHERE typname = 'teachingstyle'
+    """)).fetchone()
+    if not result:
+        teaching_style_enum = sa.Enum('EXPOSITORY', 'TOPICAL', 'NARRATIVE', 'BALANCED', name='teachingstyle')
+        teaching_style_enum.create(connection)
     
-    environment_style_enum = sa.Enum('TRADITIONAL', 'CONTEMPORARY', 'BLENDED', name='environmentstyle')
-    environment_style_enum.create(op.get_bind())
+    # Check if bibleapproach enum exists
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM pg_type WHERE typname = 'bibleapproach'
+    """)).fetchone()
+    if not result:
+        bible_approach_enum = sa.Enum('LITERAL', 'ALLEGORICAL', 'MORAL', 'ANAGOGICAL', 'BALANCED', name='bibleapproach')
+        bible_approach_enum.create(connection)
     
-    # Create churches table
-    op.create_table('churches',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('denomination', sa.String(length=100), nullable=False),
-    sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('address', sa.JSON(), nullable=True),
-    sa.Column('phone', sa.String(length=50), nullable=True),
-    sa.Column('email', sa.String(length=255), nullable=True),
-    sa.Column('website', sa.String(length=255), nullable=True),
-    sa.Column('founded_year', sa.Integer(), nullable=True),
-    sa.Column('membership_count', sa.Integer(), nullable=True),
-    sa.Column('service_times', sa.JSON(), nullable=True),
-    sa.Column('social_media', sa.JSON(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('sort_order', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_churches_id'), 'churches', ['id'], unique=False)
+    # Check if environmentstyle enum exists
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM pg_type WHERE typname = 'environmentstyle'
+    """)).fetchone()
+    if not result:
+        environment_style_enum = sa.Enum('TRADITIONAL', 'CONTEMPORARY', 'BLENDED', name='environmentstyle')
+        environment_style_enum.create(connection)
     
-    # Create speakers table
-    op.create_table('speakers',
+    # Create churches table only if it doesn't exist
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'churches'
+    """)).fetchone()
+    if not result:
+        op.create_table('churches',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('denomination', sa.String(length=100), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('address', sa.JSON(), nullable=True),
+        sa.Column('phone', sa.String(length=50), nullable=True),
+        sa.Column('email', sa.String(length=255), nullable=True),
+        sa.Column('website', sa.String(length=255), nullable=True),
+        sa.Column('founded_year', sa.Integer(), nullable=True),
+        sa.Column('membership_count', sa.Integer(), nullable=True),
+        sa.Column('service_times', sa.JSON(), nullable=True),
+        sa.Column('social_media', sa.JSON(), nullable=True),
+        sa.Column('is_active', sa.Boolean(), nullable=True),
+        sa.Column('sort_order', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+        sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_churches_id'), 'churches', ['id'], unique=False)
+    
+    # Create speakers table only if it doesn't exist
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'speakers'
+    """)).fetchone()
+    if not result:
+        op.create_table('speakers',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('title', sa.String(length=255), nullable=True),
@@ -142,7 +167,26 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_churches_id'), table_name='churches')
     op.drop_table('churches')
     
-    # Drop enum types
-    sa.Enum(name='environmentstyle').drop(op.get_bind())
-    sa.Enum(name='bibleapproach').drop(op.get_bind())
-    sa.Enum(name='teachingstyle').drop(op.get_bind())
+    # Drop enum types only if they exist
+    connection = op.get_bind()
+    
+    # Check if environmentstyle enum exists before dropping
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM pg_type WHERE typname = 'environmentstyle'
+    """)).fetchone()
+    if result:
+        sa.Enum(name='environmentstyle').drop(connection)
+    
+    # Check if bibleapproach enum exists before dropping
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM pg_type WHERE typname = 'bibleapproach'
+    """)).fetchone()
+    if result:
+        sa.Enum(name='bibleapproach').drop(connection)
+    
+    # Check if teachingstyle enum exists before dropping
+    result = connection.execute(sa.text("""
+        SELECT 1 FROM pg_type WHERE typname = 'teachingstyle'
+    """)).fetchone()
+    if result:
+        sa.Enum(name='teachingstyle').drop(connection)
