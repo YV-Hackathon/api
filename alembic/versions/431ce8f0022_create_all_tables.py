@@ -35,8 +35,8 @@ def upgrade() -> None:
             print(f"Enum {enum_name} already exists, skipping...")
     
     # Create all enum types
-    create_enum_if_not_exists('teachingstyle', ['EXPOSITORY', 'TOPICAL', 'NARRATIVE', 'BALANCED'])
-    create_enum_if_not_exists('bibleapproach', ['LITERAL', 'ALLEGORICAL', 'MORAL', 'ANAGOGICAL', 'BALANCED'])
+    create_enum_if_not_exists('teachingstyle', ['ACADEMIC', 'RELATABLE', 'BALANCED'])
+    create_enum_if_not_exists('bibleapproach', ['MORE_SCRIPTURE', 'MORE_APPLICATION', 'BALANCED'])
     create_enum_if_not_exists('environmentstyle', ['TRADITIONAL', 'CONTEMPORARY', 'BLENDED'])
     
     # Create tables only if they don't exist

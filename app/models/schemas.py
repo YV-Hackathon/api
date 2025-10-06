@@ -5,32 +5,32 @@ from datetime import datetime
 
 # Enums
 class TeachingStyle(str, Enum):
-    ACADEMIC = "Academic"
-    RELATABLE = "Relatable"
-    BALANCED = "Balanced"
+    ACADEMIC = "ACADEMIC"
+    RELATABLE = "RELATABLE"
+    BALANCED = "BALANCED"
 
 class BibleApproach(str, Enum):
-    MORE_SCRIPTURE = "More Scripture"
-    LIFE_APPLICATION = "Life Application"
-    BALANCED = "Balanced"
+    MORE_SCRIPTURE = "MORE_SCRIPTURE"
+    MORE_APPLICATION = "MORE_APPLICATION"
+    BALANCED = "BALANCED"
 
 class EnvironmentStyle(str, Enum):
-    TRADITIONAL = "Traditional"
-    CONTEMPORARY = "Contemporary"
-    BLENDED = "Blended"
+    TRADITIONAL = "TRADITIONAL"
+    CONTEMPORARY = "CONTEMPORARY"
+    BLENDED = "BLENDED"
 
 class TopicCategory(str, Enum):
-    PREACHING = "preaching"
-    TEACHING = "teaching"
-    COUNSELING = "counseling"
-    LEADERSHIP = "leadership"
-    EVANGELISM = "evangelism"
-    WORSHIP = "worship"
-    YOUTH = "youth"
-    MARRIAGE = "marriage"
-    FAMILY = "family"
-    PRAYER = "prayer"
-    OTHER = "other"
+    PREACHING = "PREACHING"
+    TEACHING = "TEACHING"
+    COUNSELING = "COUNSELING"
+    LEADERSHIP = "LEADERSHIP"
+    EVANGELISM = "EVANGELISM"
+    WORSHIP = "WORSHIP"
+    YOUTH = "YOUTH"
+    MARRIAGE = "MARRIAGE"
+    FAMILY = "FAMILY"
+    PRAYER = "PRAYER"
+    OTHER = "OTHER"
 
 # Base schemas
 class Address(BaseModel):
