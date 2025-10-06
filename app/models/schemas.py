@@ -99,7 +99,7 @@ class ChurchUpdate(BaseModel):
 class Church(ChurchBase):
     id: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -146,7 +146,7 @@ class Speaker(SpeakerBase):
     id: int
     church_id: Optional[int] = None
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -180,7 +180,7 @@ class User(UserBase):
     id: int
     is_active: bool = True
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
