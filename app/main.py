@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.api.api_v1.api import api_router
 from app.db.database import engine
 from app.db import models
+from app.admin import admin_app
 
 # Note: Database tables are now managed by Alembic migrations
 # Run 'alembic upgrade head' to apply migrations
@@ -27,6 +28,9 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Mount admin interface
+app.mount("/admin", admin_app)
 
 @app.get("/")
 async def root():
