@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from sqlmodel_admin import SQLModelAdmin
+from sqladmin import Admin, BaseView
 from sqlalchemy import create_engine
 from app.db.database import engine
 from app.db.models import Church, Speaker, User, UserSpeakerPreference, OnboardingQuestion
@@ -36,18 +36,15 @@ def create_admin_app() -> FastAPI:
         version="1.0.0"
     )
     
-    # Add authentication dependency to all routes
-    admin_app.dependency_overrides[get_current_user] = get_current_user
-    
-    # Create SQLModelAdmin instance with authentication
-    admin = SQLModelAdmin(engine, admin_app, auth_dependency=get_current_user)
+    # Create SQLAdmin instance
+    admin = Admin(admin_app, engine, authentication_backend=get_current_user)
     
     # Register models for admin interface
-    admin.add_model(Church, name="Churches", icon="church")
-    admin.add_model(Speaker, name="Speakers", icon="user")
-    admin.add_model(User, name="Users", icon="users")
-    admin.add_model(UserSpeakerPreference, name="User Speaker Preferences", icon="heart")
-    admin.add_model(OnboardingQuestion, name="Onboarding Questions", icon="question")
+    admin.add_view(Church)
+    admin.add_view(Speaker)
+    admin.add_view(User)
+    admin.add_view(UserSpeakerPreference)
+    admin.add_view(OnboardingQuestion)
     
     return admin_app
 
