@@ -25,7 +25,7 @@ echo "🔄 Running database migrations..."\n\
 alembic upgrade head\n\
 echo "✅ Migrations completed"\n\
 echo "🚀 Starting FastAPI application..."\n\
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh && \
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --forwarded-allow-ips="*" --proxy-headers' > /app/start.sh && \
     chmod +x /app/start.sh
 
 # Run migrations and start application
