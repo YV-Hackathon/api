@@ -1,31 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from sqladmin import Admin, BaseView
-from sqlalchemy import create_engine
+from fastapi import FastAPI
+from sqladmin import Admin, ModelView
 from app.db.database import engine
 from app.db.models import Church, Speaker, User, UserSpeakerPreference, OnboardingQuestion
-from app.core.config import settings
-import secrets
-
-# Simple authentication
-security = HTTPBasic()
-
-def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
-    """Simple username/password authentication for admin access."""
-    # You can change these credentials or load from environment variables
-    correct_username = "admin"
-    correct_password = "admin123"  # Change this to a secure password!
-    
-    is_correct_username = secrets.compare_digest(credentials.username, correct_username)
-    is_correct_password = secrets.compare_digest(credentials.password, correct_password)
-    
-    if not (is_correct_username and is_correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
 
 def create_admin_app() -> FastAPI:
     """Create a FastAPI admin interface for database management."""
@@ -36,15 +12,40 @@ def create_admin_app() -> FastAPI:
         version="1.0.0"
     )
     
-    # Create SQLAdmin instance
-    admin = Admin(admin_app, engine, authentication_backend=get_current_user)
+    # Create SQLAdmin instance (no authentication for now)
+    # Set base_url to "/" so it mounts at the root of the admin app
+    admin = Admin(admin_app, engine, base_url="/")
     
-    # Register models for admin interface
-    admin.add_view(Church)
-    admin.add_view(Speaker)
-    admin.add_view(User)
-    admin.add_view(UserSpeakerPreference)
-    admin.add_view(OnboardingQuestion)
+    # Create ModelView classes for each model
+    class ChurchAdmin(ModelView, model=Church):
+        column_list = [Church.id, Church.name, Church.denomination, Church.email, Church.phone, Church.is_active]
+        column_searchable_list = [Church.name, Church.denomination, Church.email]
+        column_sortable_list = [Church.id, Church.name, Church.created_at]
+    
+    class SpeakerAdmin(ModelView, model=Speaker):
+        column_list = [Speaker.id, Speaker.name, Speaker.title, Speaker.email, Speaker.phone, Speaker.is_recommended]
+        column_searchable_list = [Speaker.name, Speaker.title, Speaker.email]
+        column_sortable_list = [Speaker.id, Speaker.name, Speaker.created_at]
+    
+    class UserAdmin(ModelView, model=User):
+        column_list = [User.id, User.username, User.email, User.first_name, User.last_name, User.is_active]
+        column_searchable_list = [User.username, User.email, User.first_name, User.last_name]
+        column_sortable_list = [User.id, User.username, User.created_at]
+    
+    class UserSpeakerPreferenceAdmin(ModelView, model=UserSpeakerPreference):
+        column_list = [UserSpeakerPreference.id, UserSpeakerPreference.user_id, UserSpeakerPreference.speaker_id, UserSpeakerPreference.created_at]
+        column_sortable_list = [UserSpeakerPreference.id, UserSpeakerPreference.created_at]
+    
+    class OnboardingQuestionAdmin(ModelView, model=OnboardingQuestion):
+        column_list = [OnboardingQuestion.id, OnboardingQuestion.created_at, OnboardingQuestion.updated_at]
+        column_sortable_list = [OnboardingQuestion.id, OnboardingQuestion.created_at]
+    
+    # Register admin views
+    admin.add_view(ChurchAdmin)
+    admin.add_view(SpeakerAdmin)
+    admin.add_view(UserAdmin)
+    admin.add_view(UserSpeakerPreferenceAdmin)
+    admin.add_view(OnboardingQuestionAdmin)
     
     return admin_app
 

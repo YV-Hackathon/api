@@ -46,14 +46,9 @@ The admin interface provides:
 
 ## Security
 
-🔐 **Authentication Required**: The admin interface requires login credentials:
-- **Username**: `admin`
-- **Password**: `admin123`
-
-⚠️ **Important**: This admin interface provides full database access. In production:
-- Change the default password in `app/admin.py`
+⚠️ **Important**: This admin interface provides full database access and currently has NO authentication. In production:
+- Add authentication/authorization
 - Use HTTPS
-- Consider more robust authentication (OAuth, JWT, etc.)
 - Restrict access to authorized users only
 - Consider IP whitelisting
 
