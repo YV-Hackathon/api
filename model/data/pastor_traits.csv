@@ -1,40 +1,40 @@
-pastorId,pastorName,traits
-1,Craig Groeschel,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons
-2,Beth Moore,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Member-focused|Worship: Band-led|Long sermons
-3,Steven Furtick,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-4,Andy Stanley,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons
-5,Rick Warren,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Calm|Newcomer-friendly|Worship: Band-led|Short sermons
-6,Joel Osteen,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons
-7,T.D. Jakes,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-8,John Piper,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Calm|Member-focused|Worship: Band-led|Long sermons
-9,Joyce Meyer,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons
-10,Francis Chan,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Member-focused|Worship: Band-led|Long sermons
-11,Louie Giglio,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-12,Robert Barron,Verse-by-verse|Bible view: Salvation-scope inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Short sermons
-13,Alistair Begg,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons
-14,Matt Chandler,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Energetic|Member-focused|Worship: Band-led|Long sermons
-15,John MacArthur,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons
-16,Mark Batterson,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons
-17,Michael Todd,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-18,Greg Laurie,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-19,Jack Hibbs,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Energetic|Member-focused|Worship: Band-led|Long sermons
-20,Robert Morris,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-21,Jentezen Franklin,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-22,Christine Caine,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-23,Nick Vujicic,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-24,John Ortberg,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Deep teaching|Calm|Newcomer-friendly|Worship: Band-led|Long sermons
-25,Tim Keller,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Newcomer-friendly|Worship: Hymns/Choir-led|Long sermons
-26,Anne Graham Lotz,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Long sermons
-27,Priscilla Shirer,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-28,Shane Claiborne,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Short sermons
-29,Tony Evans,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Energetic|Member-focused|Worship: Hymns/Choir-led|Long sermons
-30,Ed Young,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons
-31,Creflo Dollar,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-32,John Hagee,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Member-focused|Worship: Hymns/Choir-led|Long sermons
-33,Tony Campolo,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Long sermons
-34,David Jeremiah,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons
-35,Mark Driscoll,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
-36,Russell Moore,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons
-37,John Eldredge,Topic-based|Bible view: Salvation-scope inerrancy|Charismatic|Practical|Calm|Newcomer-friendly|Worship: Band-led|Short sermons
-38,Bishop Michael Curry,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Short sermons
-39,Paula White,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons
+pastorId,pastorName,traits,,
+1,Craig Groeschel,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons,,Can we make these traits more accurate?
+2,Beth Moore,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Member-focused|Worship: Band-led|Long sermons,,
+3,Steven Furtick,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+4,Andy Stanley,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons,,
+5,Rick Warren,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Calm|Newcomer-friendly|Worship: Band-led|Short sermons,,
+6,Joel Osteen,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons,,
+7,T.D. Jakes,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+8,John Piper,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Calm|Member-focused|Worship: Band-led|Long sermons,,
+9,Joyce Meyer,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons,,
+10,Francis Chan,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Member-focused|Worship: Band-led|Long sermons,,
+11,Louie Giglio,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+12,Robert Barron,Verse-by-verse|Bible view: Salvation-scope inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Short sermons,,
+13,Alistair Begg,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons,,
+14,Matt Chandler,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Energetic|Member-focused|Worship: Band-led|Long sermons,,
+15,John MacArthur,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons,,
+16,Mark Batterson,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons,,
+17,Michael Todd,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+18,Greg Laurie,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+19,Jack Hibbs,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Energetic|Member-focused|Worship: Band-led|Long sermons,,
+20,Robert Morris,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+21,Jentezen Franklin,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+22,Christine Caine,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+23,Nick Vujicic,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+24,John Ortberg,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Deep teaching|Calm|Newcomer-friendly|Worship: Band-led|Long sermons,,
+25,Tim Keller,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Newcomer-friendly|Worship: Hymns/Choir-led|Long sermons,,
+26,Anne Graham Lotz,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Long sermons,,
+27,Priscilla Shirer,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+28,Shane Claiborne,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Short sermons,,
+29,Tony Evans,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Energetic|Member-focused|Worship: Hymns/Choir-led|Long sermons,,
+30,Ed Young,Topic-based|Bible view: Strict inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Short sermons,,
+31,Creflo Dollar,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+32,John Hagee,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Member-focused|Worship: Hymns/Choir-led|Long sermons,,
+33,Tony Campolo,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Long sermons,,
+34,David Jeremiah,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons,,
+35,Mark Driscoll,Verse-by-verse|Bible view: Strict inerrancy|Charismatic|Deep teaching|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
+36,Russell Moore,Verse-by-verse|Bible view: Strict inerrancy|Non-charismatic|Deep teaching|Calm|Member-focused|Worship: Hymns/Choir-led|Long sermons,,
+37,John Eldredge,Topic-based|Bible view: Salvation-scope inerrancy|Charismatic|Practical|Calm|Newcomer-friendly|Worship: Band-led|Short sermons,,
+38,Bishop Michael Curry,Topic-based|Bible view: Salvation-scope inerrancy|Non-charismatic|Practical|Energetic|Newcomer-friendly|Worship: Hymns/Choir-led|Short sermons,,
+39,Paula White,Topic-based|Bible view: Strict inerrancy|Charismatic|Practical|Energetic|Newcomer-friendly|Worship: Band-led|Long sermons,,
