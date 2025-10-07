@@ -5,9 +5,9 @@ from datetime import datetime
 
 # Enums
 class TeachingStyle(str, Enum):
-    ACADEMIC = "ACADEMIC"
-    RELATABLE = "RELATABLE"
-    BALANCED = "BALANCED"
+    WARM_AND_CONVERSATIONAL = "WARM_AND_CONVERSATIONAL"
+    CALM_AND_REFLECTIVE = "CALM_AND_REFLECTIVE"
+    PASSIONATE_AND_HIGH_ENERGY = "PASSIONATE_AND_HIGH_ENERGY"
 
 class BibleApproach(str, Enum):
     MORE_SCRIPTURE = "MORE_SCRIPTURE"
@@ -31,6 +31,10 @@ class TopicCategory(str, Enum):
     FAMILY = "FAMILY"
     PRAYER = "PRAYER"
     OTHER = "OTHER"
+
+class Gender(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
 
 # Base schemas
 class Address(BaseModel):
@@ -118,9 +122,10 @@ class SpeakerBase(BaseModel):
     social_media: Optional[SocialMedia] = None
     speaking_topics: List[SpeakingTopic] = []
     sort_order: int = 0
-    teaching_style: TeachingStyle = TeachingStyle.BALANCED
+    teaching_style: TeachingStyle = TeachingStyle.WARM_AND_CONVERSATIONAL
     bible_approach: BibleApproach = BibleApproach.BALANCED
     environment_style: EnvironmentStyle = EnvironmentStyle.BLENDED
+    gender: Optional[Gender] = None
     is_recommended: bool = False
 
 class SpeakerCreate(SpeakerBase):
@@ -139,6 +144,7 @@ class SpeakerUpdate(BaseModel):
     teaching_style: Optional[TeachingStyle] = None
     bible_approach: Optional[BibleApproach] = None
     environment_style: Optional[EnvironmentStyle] = None
+    gender: Optional[Gender] = None
     is_recommended: Optional[bool] = None
     church_id: Optional[int] = None
 
@@ -191,6 +197,7 @@ class UserBase(BaseModel):
     bible_reading_preference: Optional[BibleApproach] = None
     teaching_style_preference: Optional[TeachingStyle] = None
     environment_preference: Optional[EnvironmentStyle] = None
+    gender_preference: Optional[Gender] = None
 
 class UserCreate(UserBase):
     password: str
@@ -202,6 +209,7 @@ class UserUpdate(BaseModel):
     bible_reading_preference: Optional[BibleApproach] = None
     teaching_style_preference: Optional[TeachingStyle] = None
     environment_preference: Optional[EnvironmentStyle] = None
+    gender_preference: Optional[Gender] = None
 
 class User(UserBase):
     id: int

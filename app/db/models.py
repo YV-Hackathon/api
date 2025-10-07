@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Foreign
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
-from app.models.schemas import TeachingStyle, BibleApproach, EnvironmentStyle, TopicCategory
+from app.models.schemas import TeachingStyle, BibleApproach, EnvironmentStyle, TopicCategory, Gender
 
 class Church(Base):
     __tablename__ = "churches"
@@ -40,9 +40,10 @@ class Speaker(Base):
     social_media = Column(JSON)  # Store as JSON
     speaking_topics = Column(JSON)  # Store as JSON array
     sort_order = Column(Integer, default=0)
-    teaching_style = Column(SQLEnum(TeachingStyle), default=TeachingStyle.BALANCED)
+    teaching_style = Column(SQLEnum(TeachingStyle), default=TeachingStyle.WARM_AND_CONVERSATIONAL)
     bible_approach = Column(SQLEnum(BibleApproach), default=BibleApproach.BALANCED)
     environment_style = Column(SQLEnum(EnvironmentStyle), default=EnvironmentStyle.BLENDED)
+    gender = Column(SQLEnum(Gender))
     is_recommended = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -84,6 +85,7 @@ class User(Base):
     bible_reading_preference = Column(SQLEnum(BibleApproach))
     teaching_style_preference = Column(SQLEnum(TeachingStyle))
     environment_preference = Column(SQLEnum(EnvironmentStyle))
+    gender_preference = Column(SQLEnum(Gender))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
