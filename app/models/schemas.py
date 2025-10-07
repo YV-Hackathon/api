@@ -154,6 +154,33 @@ class Speaker(SpeakerBase):
 class SpeakerWithChurch(Speaker):
     church: Optional[Church] = None
 
+# Sermon schemas
+class SermonBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    gcs_url: str
+
+class SermonCreate(SermonBase):
+    speaker_id: int
+
+class SermonUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    gcs_url: Optional[str] = None
+    speaker_id: Optional[int] = None
+
+class Sermon(SermonBase):
+    id: int
+    speaker_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class SermonWithSpeaker(Sermon):
+    speaker: Optional[Speaker] = None
+
 # User schemas
 class UserBase(BaseModel):
     username: str
@@ -213,4 +240,5 @@ class OnboardingResponse(BaseModel):
 # Update forward references
 ChurchWithSpeakers.model_rebuild()
 SpeakerWithChurch.model_rebuild()
+SermonWithSpeaker.model_rebuild()
 UserWithPreferences.model_rebuild()

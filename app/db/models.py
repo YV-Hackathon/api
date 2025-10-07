@@ -52,6 +52,23 @@ class Speaker(Base):
     
     # Relationships
     church = relationship("Church", back_populates="speakers")
+    sermons = relationship("Sermon", back_populates="speaker")
+
+class Sermon(Base):
+    __tablename__ = "sermons"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+    gcs_url = Column(String(500), nullable=False)  # URL to GCS bucket
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Foreign keys
+    speaker_id = Column(Integer, ForeignKey("speakers.id"), nullable=False)
+    
+    # Relationships
+    speaker = relationship("Speaker", back_populates="sermons")
 
 class User(Base):
     __tablename__ = "users"
