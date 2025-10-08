@@ -283,6 +283,30 @@ class SpeakerFollowersWithDetails(SpeakerFollowers):
     speaker: Optional[Speaker] = None
     user: Optional[User] = None
 
+# Sermon Recommendation schemas
+class SpeakerInfo(BaseModel):
+    id: int
+    name: str
+    title: Optional[str] = None
+    teaching_style: Optional[TeachingStyle] = None
+    bible_approach: Optional[BibleApproach] = None
+    environment_style: Optional[EnvironmentStyle] = None
+    gender: Optional[Gender] = None
+
+class SermonRecommendation(BaseModel):
+    sermon_id: int
+    title: str
+    description: Optional[str] = None
+    gcs_url: str
+    speaker: SpeakerInfo
+    matching_preferences: List[str] = []
+    recommendation_score: float
+
+class SermonRecommendationsResponse(BaseModel):
+    recommendations: List[SermonRecommendation]
+    total_count: int
+    user_preferences: Dict[str, Any] = {}
+
 # Update forward references
 ChurchWithSpeakers.model_rebuild()
 SpeakerWithChurch.model_rebuild()
