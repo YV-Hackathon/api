@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
@@ -26,6 +26,7 @@ class Church(Base):
     
     # Relationships
     speakers = relationship("Speaker", back_populates="church")
+    followers = relationship("ChurchFollowers", back_populates="church")
 
 class Speaker(Base):
     __tablename__ = "speakers"
@@ -88,6 +89,9 @@ class User(Base):
     gender_preference = Column(SQLEnum(Gender))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    followed_churches = relationship("ChurchFollowers", back_populates="user")
 
 class UserSpeakerPreference(Base):
     __tablename__ = "user_speaker_preferences"
@@ -108,3 +112,20 @@ class OnboardingQuestion(Base):
     questions = Column(JSON)  # Store the entire questions structure as JSON
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class ChurchFollowers(Base):
+    __tablename__ = "church_followers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    church_id = Column(Integer, ForeignKey("churches.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    church = relationship("Church", back_populates="followers")
+    user = relationship("User", back_populates="followed_churches")
+    
+    # Unique constraint to prevent duplicate follows
+    __table_args__ = (
+        UniqueConstraint('church_id', 'user_id', name='uq_church_user_follow'),
+    )

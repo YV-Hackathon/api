@@ -245,8 +245,28 @@ class OnboardingResponse(BaseModel):
     user: UserWithPreferences
     recommended_speakers: List[SpeakerWithChurch]
 
+# Church Followers schemas
+class ChurchFollowersBase(BaseModel):
+    church_id: int
+    user_id: int
+
+class ChurchFollowersCreate(ChurchFollowersBase):
+    pass
+
+class ChurchFollowers(ChurchFollowersBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ChurchFollowersWithDetails(ChurchFollowers):
+    church: Optional[Church] = None
+    user: Optional[User] = None
+
 # Update forward references
 ChurchWithSpeakers.model_rebuild()
 SpeakerWithChurch.model_rebuild()
 SermonWithSpeaker.model_rebuild()
 UserWithPreferences.model_rebuild()
+ChurchFollowersWithDetails.model_rebuild()
