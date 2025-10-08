@@ -79,6 +79,7 @@ class ChurchBase(BaseModel):
     membership_count: Optional[int] = None
     service_times: Optional[ServiceTimes] = None
     social_media: Optional[SocialMedia] = None
+    image_url: Optional[str] = None
     is_active: bool = True
     sort_order: int = 0
 
@@ -97,6 +98,7 @@ class ChurchUpdate(BaseModel):
     membership_count: Optional[int] = None
     service_times: Optional[ServiceTimes] = None
     social_media: Optional[SocialMedia] = None
+    image_url: Optional[str] = None
     is_active: Optional[bool] = None
     sort_order: Optional[int] = None
 

@@ -28,6 +28,7 @@ class Church(Base):
     membership_count = Column(Integer)
     service_times = Column(JSON)  # Store as JSON
     social_media = Column(JSON)  # Store as JSON
+    image_url = Column(String(500))  # URL to church image in GCS
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
