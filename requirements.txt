@@ -11,3 +11,4 @@ pydantic-settings==2.11.0
 python-dotenv==1.1.1
 sqladmin==0.18.0
 python-multipart==0.0.20
+torch==2.8.0
