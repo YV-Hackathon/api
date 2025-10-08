@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
 from app.db import models
-from app.models.schemas import Church, ChurchCreate, ChurchUpdate, ChurchWithSpeakers
+from app.models.schemas import Church, ChurchCreate, ChurchUpdate, ChurchWithSpeakers, Speaker
 
 router = APIRouter()
 
@@ -73,3 +73,51 @@ def delete_church(church_id: int, db: Session = Depends(get_db)):
     db.delete(db_church)
     db.commit()
     return {"message": "Church deleted successfully"}
+
+@router.get("/{church_id}/pastors", response_model=List[Speaker])
+def get_church_pastors(church_id: int, db: Session = Depends(get_db)):
+    """Get all pastors that speak at a specific church"""
+    church = db.query(models.Church).filter(models.Church.id == church_id).first()
+    if not church:
+        raise HTTPException(status_code=404, detail="Church not found")
+    
+    # Return pastors who speak at this church (many-to-many relationship)
+    return church.speaking_pastors
+
+@router.post("/{church_id}/pastors/{pastor_id}")
+def add_pastor_to_church(church_id: int, pastor_id: int, db: Session = Depends(get_db)):
+    """Add a pastor as someone who speaks at this church"""
+    church = db.query(models.Church).filter(models.Church.id == church_id).first()
+    if not church:
+        raise HTTPException(status_code=404, detail="Church not found")
+    
+    pastor = db.query(models.Speaker).filter(models.Speaker.id == pastor_id).first()
+    if not pastor:
+        raise HTTPException(status_code=404, detail="Pastor not found")
+    
+    # Check if relationship already exists
+    if pastor in church.speaking_pastors:
+        raise HTTPException(status_code=400, detail="Pastor already speaks at this church")
+    
+    church.speaking_pastors.append(pastor)
+    db.commit()
+    return {"message": "Pastor added to church successfully"}
+
+@router.delete("/{church_id}/pastors/{pastor_id}")
+def remove_pastor_from_church(church_id: int, pastor_id: int, db: Session = Depends(get_db)):
+    """Remove a pastor from speaking at this church"""
+    church = db.query(models.Church).filter(models.Church.id == church_id).first()
+    if not church:
+        raise HTTPException(status_code=404, detail="Church not found")
+    
+    pastor = db.query(models.Speaker).filter(models.Speaker.id == pastor_id).first()
+    if not pastor:
+        raise HTTPException(status_code=404, detail="Pastor not found")
+    
+    # Check if relationship exists
+    if pastor not in church.speaking_pastors:
+        raise HTTPException(status_code=400, detail="Pastor does not speak at this church")
+    
+    church.speaking_pastors.remove(pastor)
+    db.commit()
+    return {"message": "Pastor removed from church successfully"}
