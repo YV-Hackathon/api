@@ -307,6 +307,38 @@ class SermonRecommendationsResponse(BaseModel):
     total_count: int
     user_preferences: Dict[str, Any] = {}
 
+# Sermon Preference schemas
+class SermonPreferenceType(str, Enum):
+    THUMBS_UP = "thumbs_up"
+    THUMBS_DOWN = "thumbs_down"
+
+class SermonPreferenceBase(BaseModel):
+    user_id: int
+    sermon_id: int
+    preference: SermonPreferenceType
+
+class SermonPreferenceCreate(SermonPreferenceBase):
+    pass
+
+class SermonPreferenceUpdate(BaseModel):
+    preference: SermonPreferenceType
+
+class SermonPreference(SermonPreferenceBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class SermonPreferenceWithDetails(SermonPreference):
+    sermon: Optional[Sermon] = None
+    user: Optional[User] = None
+
+class SermonPreferencesBatch(BaseModel):
+    user_id: int
+    preferences: List[Dict[str, Any]]  # List of {"sermon_id": int, "preference": "thumbs_up" or "thumbs_down"}
+
 # Update forward references
 ChurchWithSpeakers.model_rebuild()
 SpeakerWithChurch.model_rebuild()

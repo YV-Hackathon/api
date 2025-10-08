@@ -148,3 +148,22 @@ class SpeakerFollowers(Base):
     __table_args__ = (
         UniqueConstraint('speaker_id', 'user_id', name='uq_speaker_user_follow'),
     )
+
+class UserSermonPreference(Base):
+    __tablename__ = "user_sermon_preferences"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    sermon_id = Column(Integer, ForeignKey("sermons.id"), nullable=False)
+    preference = Column(String(10), nullable=False)  # "thumbs_up" or "thumbs_down"
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    sermon = relationship("Sermon")
+    
+    # Unique constraint to prevent duplicate preferences for same user/sermon
+    __table_args__ = (
+        UniqueConstraint('user_id', 'sermon_id', name='uq_user_sermon_preference'),
+    )
