@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "postgresql://username:password@localhost:5432/cms_db"
+    DATABASE_URL: str = "postgresql://fastapi:r%3E%3A%3Fve%7B2p!f1UfCL%3A%5Di%7BjFT9@34.71.154.21:5432/fastapi_cms"
     
     # Security
     SECRET_KEY: str = "your-secret-key-here"
