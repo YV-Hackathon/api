@@ -339,6 +339,28 @@ class SermonPreferencesBatch(BaseModel):
     user_id: int
     preferences: List[Dict[str, Any]]  # List of {"sermon_id": int, "preference": "thumbs_up" or "thumbs_down"}
 
+# Recommendations schemas
+class RecommendationsBase(BaseModel):
+    user_id: int
+    church_ids: List[int]
+
+class RecommendationsCreate(RecommendationsBase):
+    pass
+
+class RecommendationsUpdate(BaseModel):
+    church_ids: List[int]
+
+class Recommendations(RecommendationsBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class RecommendationsWithDetails(Recommendations):
+    user: Optional[User] = None
+
 # Update forward references
 ChurchWithSpeakers.model_rebuild()
 SpeakerWithChurch.model_rebuild()
@@ -346,3 +368,4 @@ SermonWithSpeaker.model_rebuild()
 UserWithPreferences.model_rebuild()
 ChurchFollowersWithDetails.model_rebuild()
 SpeakerFollowersWithDetails.model_rebuild()
+RecommendationsWithDetails.model_rebuild()

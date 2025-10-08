@@ -94,6 +94,7 @@ class User(Base):
     # Relationships
     followed_churches = relationship("ChurchFollowers", back_populates="user")
     followed_speakers = relationship("SpeakerFollowers", back_populates="user")
+    recommendations = relationship("Recommendations", back_populates="user")
 
 class UserSpeakerPreference(Base):
     __tablename__ = "user_speaker_preferences"
@@ -166,4 +167,21 @@ class UserSermonPreference(Base):
     # Unique constraint to prevent duplicate preferences for same user/sermon
     __table_args__ = (
         UniqueConstraint('user_id', 'sermon_id', name='uq_user_sermon_preference'),
+    )
+
+class Recommendations(Base):
+    __tablename__ = "recommendations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    church_ids = Column(JSON, nullable=False)  # Array of church IDs as JSON
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    
+    # Unique constraint to prevent duplicate recommendations for same user
+    __table_args__ = (
+        UniqueConstraint('user_id', name='uq_user_recommendations'),
     )
