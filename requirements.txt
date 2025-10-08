@@ -1,4 +1,4 @@
-fastapi==0.118.0
+fastapi==0.118.2
 uvicorn[standard]==0.37.0
 sqlalchemy==2.0.43
 alembic==1.16.5
@@ -10,5 +10,8 @@ pydantic[email]==2.11.9
 pydantic-settings==2.11.0
 python-dotenv==1.1.1
 sqladmin==0.18.0
-python-multipart==0.0.20
 torch==2.8.0
+pandas==2.2.3
+scikit-learn==1.5.2
+numpy==1.26.4
+joblib==1.4.2
