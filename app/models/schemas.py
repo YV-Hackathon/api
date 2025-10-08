@@ -126,6 +126,7 @@ class SpeakerBase(BaseModel):
     bible_approach: BibleApproach = BibleApproach.BALANCED
     environment_style: EnvironmentStyle = EnvironmentStyle.BLENDED
     gender: Optional[Gender] = None
+    profile_picture_url: Optional[str] = None
     is_recommended: bool = False
 
 class SpeakerCreate(SpeakerBase):
@@ -145,6 +146,7 @@ class SpeakerUpdate(BaseModel):
     bible_approach: Optional[BibleApproach] = None
     environment_style: Optional[EnvironmentStyle] = None
     gender: Optional[Gender] = None
+    profile_picture_url: Optional[str] = None
     is_recommended: Optional[bool] = None
     church_id: Optional[int] = None
 
@@ -342,13 +344,15 @@ class SermonPreferencesBatch(BaseModel):
 # Recommendations schemas
 class RecommendationsBase(BaseModel):
     user_id: int
-    church_ids: List[int]
+    speaker_ids: List[int]
+    scores: Optional[List[float]] = None
 
 class RecommendationsCreate(RecommendationsBase):
     pass
 
 class RecommendationsUpdate(BaseModel):
-    church_ids: List[int]
+    speaker_ids: List[int]
+    scores: Optional[List[float]] = None
 
 class Recommendations(RecommendationsBase):
     id: int
@@ -360,6 +364,27 @@ class Recommendations(RecommendationsBase):
 
 class RecommendationsWithDetails(Recommendations):
     user: Optional[User] = None
+
+# New schemas for speaker-based recommendations
+class SpeakerRecommendation(BaseModel):
+    speaker_id: int
+    speaker_name: str
+    church_name: Optional[str] = None
+    recommendation_score: Optional[float] = None
+    matching_preferences: List[str] = []
+
+class ChurchRecommendation(BaseModel):
+    church_id: int
+    church_name: str
+    denomination: str
+    description: Optional[str] = None
+    recommended_speakers: List[SpeakerInfo] = []
+    recommendation_score: Optional[float] = None
+
+class ChurchRecommendationsResponse(BaseModel):
+    recommendations: List[ChurchRecommendation]
+    total_count: int
+    user_preferences: Dict[str, Any]
 
 # Update forward references
 ChurchWithSpeakers.model_rebuild()

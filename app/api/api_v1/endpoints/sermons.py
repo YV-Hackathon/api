@@ -7,6 +7,7 @@ from app.models.schemas import (
     Sermon, SermonCreate, SermonUpdate, SermonWithSpeaker,
     SermonRecommendationsResponse, SermonRecommendation, SpeakerInfo
 )
+from app.services.recommendation_service import get_ml_service
 
 router = APIRouter()
 
@@ -100,21 +101,67 @@ def get_speaker_sermons(speaker_id: int, db: Session = Depends(get_db)):
 def get_sermon_recommendations(
     user_id: int, 
     limit: int = Query(10, ge=1, le=50),
+    refresh: bool = Query(False, description="Force refresh of recommendations"),
     db: Session = Depends(get_db)
 ):
-    """Get 10 recommended sermon clips for a user based on their preferences"""
+    """Get recommended sermon clips for a user based on ML model speaker recommendations"""
     # Verify that the user exists
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Get sermons with their speakers
-    sermons = db.query(models.Sermon).join(models.Speaker).limit(limit).all()
+    ml_service = get_ml_service()
     
-    # Convert to response format with mock matching preferences
+    # Get stored recommendations or generate new ones
+    stored_recs = ml_service.get_stored_recommendations(db, user_id)
+    
+    if not stored_recs or refresh:
+        # Generate new recommendations using ML model
+        user_preferences = {
+            'trait_choices': [],  # You can populate this from user preferences
+            'teaching_style': user.teaching_style_preference,
+            'bible_approach': user.bible_reading_preference,
+            'environment_style': user.environment_preference,
+            'gender_preference': user.gender_preference
+        }
+        
+        # Generate speaker recommendations
+        speaker_recs = ml_service.generate_recommendations(user_preferences, limit=limit*2)  # Get more speakers to have enough sermons
+        
+        # Store the recommendations
+        stored_recs = ml_service.store_recommendations(db, user_id, speaker_recs)
+    
+    # Get sermons from recommended speakers
+    recommended_speaker_ids = stored_recs.speaker_ids[:limit*2] if stored_recs.speaker_ids else []
+    
+    if recommended_speaker_ids:
+        # Get sermons from recommended speakers, ordered by recommendation score
+        sermons_query = db.query(models.Sermon).join(models.Speaker).filter(
+            models.Speaker.id.in_(recommended_speaker_ids)
+        )
+        
+        # Order by speaker recommendation score (if available)
+        if stored_recs.scores:
+            # Create a mapping of speaker_id to score for ordering
+            speaker_score_map = dict(zip(stored_recs.speaker_ids, stored_recs.scores))
+            sermons = sermons_query.all()
+            # Sort sermons by their speaker's recommendation score
+            sermons.sort(key=lambda s: speaker_score_map.get(s.speaker_id, 0), reverse=True)
+        else:
+            sermons = sermons_query.all()
+        
+        # Limit to requested number of sermons
+        sermons = sermons[:limit]
+    else:
+        # Fallback: get sermons using basic preference matching
+        sermons = _get_fallback_sermon_recommendations(user, db, limit)
+    
+    # Convert to response format
     recommendations = []
+    speaker_score_map = dict(zip(stored_recs.speaker_ids, stored_recs.scores or [])) if stored_recs else {}
+    
     for sermon in sermons:
-        # Create mock matching preferences based on user preferences
+        # Create matching preferences based on user preferences
         matching_preferences = []
         if user.teaching_style_preference and user.teaching_style_preference == sermon.speaker.teaching_style:
             matching_preferences.append(f"Teaching style: {sermon.speaker.teaching_style.value}")
@@ -139,6 +186,9 @@ def get_sermon_recommendations(
             gender=sermon.speaker.gender
         )
         
+        # Get recommendation score from ML model
+        recommendation_score = speaker_score_map.get(sermon.speaker_id, 0.5)
+        
         recommendation = SermonRecommendation(
             sermon_id=sermon.id,
             title=sermon.title,
@@ -146,7 +196,7 @@ def get_sermon_recommendations(
             gcs_url=sermon.gcs_url,
             speaker=speaker_info,
             matching_preferences=matching_preferences,
-            recommendation_score=0.85  # Mock score
+            recommendation_score=recommendation_score
         )
         recommendations.append(recommendation)
     
@@ -163,3 +213,29 @@ def get_sermon_recommendations(
         total_count=len(recommendations),
         user_preferences=user_preferences
     )
+
+
+def _get_fallback_sermon_recommendations(user, db: Session, limit: int) -> List[models.Sermon]:
+    """Fallback sermon recommendations using basic preference matching."""
+    query = db.query(models.Sermon).join(models.Speaker)
+    
+    # Filter by user preferences
+    if user.teaching_style_preference:
+        query = query.filter(models.Speaker.teaching_style == user.teaching_style_preference)
+    
+    if user.bible_reading_preference:
+        query = query.filter(models.Speaker.bible_approach == user.bible_reading_preference)
+    
+    if user.environment_preference:
+        query = query.filter(models.Speaker.environment_style == user.environment_preference)
+    
+    if user.gender_preference:
+        query = query.filter(models.Speaker.gender == user.gender_preference)
+    
+    sermons = query.limit(limit).all()
+    
+    # If no matches, return any sermons
+    if not sermons:
+        sermons = db.query(models.Sermon).join(models.Speaker).limit(limit).all()
+    
+    return sermons

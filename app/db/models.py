@@ -1,8 +1,17 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
 from app.models.schemas import TeachingStyle, BibleApproach, EnvironmentStyle, TopicCategory, Gender
+
+# Association table for many-to-many relationship between speakers and churches
+speaker_church_association = Table(
+    'speaker_church_associations',
+    Base.metadata,
+    Column('speaker_id', Integer, ForeignKey('speakers.id'), primary_key=True),
+    Column('church_id', Integer, ForeignKey('churches.id'), primary_key=True),
+    Column('created_at', DateTime(timezone=True), server_default=func.now())
+)
 
 class Church(Base):
     __tablename__ = "churches"
@@ -25,8 +34,8 @@ class Church(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    speakers = relationship("Speaker", back_populates="church")
-    followers = relationship("ChurchFollowers", back_populates="church")
+    speakers = relationship("Speaker", back_populates="church")  # One-to-many (home church)
+    speaking_pastors = relationship("Speaker", secondary=speaker_church_association, back_populates="speaking_churches")  # Many-to-many
 
 class Speaker(Base):
     __tablename__ = "speakers"
@@ -45,6 +54,7 @@ class Speaker(Base):
     bible_approach = Column(SQLEnum(BibleApproach), default=BibleApproach.BALANCED)
     environment_style = Column(SQLEnum(EnvironmentStyle), default=EnvironmentStyle.BLENDED)
     gender = Column(SQLEnum(Gender))
+    profile_picture_url = Column(String(500))  # URL to profile picture in GCS
     is_recommended = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -53,9 +63,9 @@ class Speaker(Base):
     church_id = Column(Integer, ForeignKey("churches.id"))
     
     # Relationships
-    church = relationship("Church", back_populates="speakers")
+    church = relationship("Church", back_populates="speakers")  # One-to-many (home church)
+    speaking_churches = relationship("Church", secondary=speaker_church_association, back_populates="speaking_pastors")  # Many-to-many
     sermons = relationship("Sermon", back_populates="speaker")
-    followers = relationship("SpeakerFollowers", back_populates="speaker")
 
 class Sermon(Base):
     __tablename__ = "sermons"
@@ -90,11 +100,6 @@ class User(Base):
     gender_preference = Column(SQLEnum(Gender))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    followed_churches = relationship("ChurchFollowers", back_populates="user")
-    followed_speakers = relationship("SpeakerFollowers", back_populates="user")
-    recommendations = relationship("Recommendations", back_populates="user")
 
 class UserSpeakerPreference(Base):
     __tablename__ = "user_speaker_preferences"
@@ -116,65 +121,13 @@ class OnboardingQuestion(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-class ChurchFollowers(Base):
-    __tablename__ = "church_followers"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    church_id = Column(Integer, ForeignKey("churches.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    church = relationship("Church", back_populates="followers")
-    user = relationship("User", back_populates="followed_churches")
-    
-    # Unique constraint to prevent duplicate follows
-    __table_args__ = (
-        UniqueConstraint('church_id', 'user_id', name='uq_church_user_follow'),
-    )
-
-class SpeakerFollowers(Base):
-    __tablename__ = "speaker_followers"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    speaker_id = Column(Integer, ForeignKey("speakers.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    speaker = relationship("Speaker", back_populates="followers")
-    user = relationship("User", back_populates="followed_speakers")
-    
-    # Unique constraint to prevent duplicate follows
-    __table_args__ = (
-        UniqueConstraint('speaker_id', 'user_id', name='uq_speaker_user_follow'),
-    )
-
-class UserSermonPreference(Base):
-    __tablename__ = "user_sermon_preferences"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    sermon_id = Column(Integer, ForeignKey("sermons.id"), nullable=False)
-    preference = Column(String(10), nullable=False)  # "thumbs_up" or "thumbs_down"
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    user = relationship("User")
-    sermon = relationship("Sermon")
-    
-    # Unique constraint to prevent duplicate preferences for same user/sermon
-    __table_args__ = (
-        UniqueConstraint('user_id', 'sermon_id', name='uq_user_sermon_preference'),
-    )
-
 class Recommendations(Base):
     __tablename__ = "recommendations"
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    church_ids = Column(JSON, nullable=False)  # Array of church IDs as JSON
+    speaker_ids = Column(JSON, nullable=False)  # Array of speaker IDs as JSON
+    scores = Column(JSON, nullable=True)  # Optional: Array of recommendation scores as JSON
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

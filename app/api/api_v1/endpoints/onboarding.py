@@ -70,7 +70,8 @@ def get_onboarding_questions(db: Session = Depends(get_db)):
             "value": str(speaker.id),
             "label": speaker.name,
             "subtitle": speaker.title,
-            "church": speaker.church.name if speaker.church else "No Church"
+            "church": speaker.church.name if speaker.church else "No Church",
+            "profile_picture_url": speaker.profile_picture_url
         }
         speaker_options.append(option)
     
