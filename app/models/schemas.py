@@ -264,9 +264,29 @@ class ChurchFollowersWithDetails(ChurchFollowers):
     church: Optional[Church] = None
     user: Optional[User] = None
 
+# Speaker Followers schemas
+class SpeakerFollowersBase(BaseModel):
+    speaker_id: int
+    user_id: int
+
+class SpeakerFollowersCreate(SpeakerFollowersBase):
+    pass
+
+class SpeakerFollowers(SpeakerFollowersBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class SpeakerFollowersWithDetails(SpeakerFollowers):
+    speaker: Optional[Speaker] = None
+    user: Optional[User] = None
+
 # Update forward references
 ChurchWithSpeakers.model_rebuild()
 SpeakerWithChurch.model_rebuild()
 SermonWithSpeaker.model_rebuild()
 UserWithPreferences.model_rebuild()
 ChurchFollowersWithDetails.model_rebuild()
+SpeakerFollowersWithDetails.model_rebuild()

@@ -55,6 +55,7 @@ class Speaker(Base):
     # Relationships
     church = relationship("Church", back_populates="speakers")
     sermons = relationship("Sermon", back_populates="speaker")
+    followers = relationship("SpeakerFollowers", back_populates="speaker")
 
 class Sermon(Base):
     __tablename__ = "sermons"
@@ -92,6 +93,7 @@ class User(Base):
     
     # Relationships
     followed_churches = relationship("ChurchFollowers", back_populates="user")
+    followed_speakers = relationship("SpeakerFollowers", back_populates="user")
 
 class UserSpeakerPreference(Base):
     __tablename__ = "user_speaker_preferences"
@@ -128,4 +130,21 @@ class ChurchFollowers(Base):
     # Unique constraint to prevent duplicate follows
     __table_args__ = (
         UniqueConstraint('church_id', 'user_id', name='uq_church_user_follow'),
+    )
+
+class SpeakerFollowers(Base):
+    __tablename__ = "speaker_followers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    speaker_id = Column(Integer, ForeignKey("speakers.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    speaker = relationship("Speaker", back_populates="followers")
+    user = relationship("User", back_populates="followed_speakers")
+    
+    # Unique constraint to prevent duplicate follows
+    __table_args__ = (
+        UniqueConstraint('speaker_id', 'user_id', name='uq_speaker_user_follow'),
     )
