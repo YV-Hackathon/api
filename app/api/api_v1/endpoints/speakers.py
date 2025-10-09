@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from app.db.database import get_db
 from app.db import models
-from app.models.schemas import Speaker, SpeakerCreate, SpeakerUpdate, SpeakerWithChurch, Church, convert_speaker_data
+from app.models.schemas import Speaker, SpeakerCreate, SpeakerUpdate, SpeakerWithChurch, Church
 
 router = APIRouter()
 
-@router.get("/", response_model=List[SpeakerWithChurch])
+@router.get("/", response_model=List[Speaker])
 def get_speakers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -36,13 +36,8 @@ def get_speakers(
     if environment_style:
         query = query.filter(models.Speaker.environment_style == environment_style)
     
-    speakers = query.options(joinedload(models.Speaker.church)).offset(skip).limit(limit).all()
-    # Convert speaker data to handle speaking_topics
-    converted_speakers = []
-    for speaker in speakers:
-        converted_data = convert_speaker_data(speaker)
-        converted_speakers.append(SpeakerWithChurch(**converted_data))
-    return converted_speakers
+    speakers = query.offset(skip).limit(limit).all()
+    return speakers
 
 @router.get("/{speaker_id}", response_model=SpeakerWithChurch)
 def get_speaker(speaker_id: int, db: Session = Depends(get_db)):

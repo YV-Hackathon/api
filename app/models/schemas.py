@@ -123,7 +123,7 @@ class SpeakerBase(BaseModel):
     phone: Optional[str] = None
     years_of_service: Optional[int] = None
     social_media: Optional[SocialMedia] = None
-    speaking_topics: List[SpeakingTopic] = []
+    speaking_topics: Optional[List[SpeakingTopic]] = []
     sort_order: int = 0
     teaching_style: TeachingStyle = TeachingStyle.WARM_AND_CONVERSATIONAL
     bible_approach: BibleApproach = BibleApproach.BALANCED
@@ -132,6 +132,36 @@ class SpeakerBase(BaseModel):
     profile_picture_url: Optional[str] = None
     is_recommended: bool = False
     
+    @field_validator('speaking_topics', mode='before')
+    @classmethod
+    def convert_speaking_topics(cls, v):
+        """Convert speaking_topics from None to empty array, or handle other formats"""
+        if v is None:
+            return []
+        
+        if isinstance(v, str):
+            try:
+                topics_data = json.loads(v)
+                if isinstance(topics_data, list):
+                    speaking_topics = []
+                    for topic_data in topics_data:
+                        if isinstance(topic_data, dict):
+                            speaking_topics.append(SpeakingTopic(**topic_data))
+                    return speaking_topics
+                else:
+                    return []
+            except (json.JSONDecodeError, TypeError, ValueError):
+                return []
+        
+        if isinstance(v, list):
+            # Already a list, convert each item to SpeakingTopic
+            speaking_topics = []
+            for topic_data in v:
+                if isinstance(topic_data, dict):
+                    speaking_topics.append(SpeakingTopic(**topic_data))
+            return speaking_topics
+        
+        return []
 
 class SpeakerCreate(SpeakerBase):
     church_id: Optional[int] = None
