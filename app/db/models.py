@@ -39,6 +39,9 @@ class Church(Base):
     speakers = relationship("Speaker", back_populates="church")  # One-to-many (home church)
     speaking_pastors = relationship("Speaker", secondary=speaker_church_association, back_populates="speaking_churches")  # Many-to-many
     featured_sermons = relationship("FeaturedSermon", back_populates="church")
+    
+    def __str__(self):
+        return f"{self.name} ({self.denomination})"
 
 class Speaker(Base):
     __tablename__ = "speakers"
@@ -70,6 +73,9 @@ class Speaker(Base):
     church = relationship("Church", back_populates="speakers")  # One-to-many (home church)
     speaking_churches = relationship("Church", secondary=speaker_church_association, back_populates="speaking_pastors")  # Many-to-many
     sermons = relationship("Sermon", back_populates="speaker")
+    
+    def __str__(self):
+        return f"{self.name} - {self.title}" if self.title else self.name
 
 class Sermon(Base):
     __tablename__ = "sermons"
@@ -88,6 +94,9 @@ class Sermon(Base):
     # Relationships
     speaker = relationship("Speaker", back_populates="sermons")
     featured_in_churches = relationship("FeaturedSermon", back_populates="sermon")
+    
+    def __str__(self):
+        return self.title
 
 class User(Base):
     __tablename__ = "users"
@@ -106,6 +115,9 @@ class User(Base):
     gender_preference = Column(SQLEnum(Gender))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.username})"
 
 class UserSpeakerPreference(Base):
     __tablename__ = "user_speaker_preferences"
@@ -118,6 +130,9 @@ class UserSpeakerPreference(Base):
     # Relationships
     user = relationship("User")
     speaker = relationship("Speaker")
+    
+    def __str__(self):
+        return f"User {self.user_id} -> Speaker {self.speaker_id}"
 
 class UserSermonPreference(Base):
     __tablename__ = "user_sermon_preferences"
@@ -133,6 +148,9 @@ class UserSermonPreference(Base):
     user = relationship("User")
     sermon = relationship("Sermon")
     
+    def __str__(self):
+        return f"User {self.user_id} -> Sermon {self.sermon_id} ({self.preference})"
+    
     # Unique constraint to prevent duplicate preferences for same user-sermon pair
     __table_args__ = (
         UniqueConstraint('user_id', 'sermon_id', name='uq_user_sermon_preference'),
@@ -145,6 +163,9 @@ class OnboardingQuestion(Base):
     questions = Column(JSON)  # Store the entire questions structure as JSON
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    def __str__(self):
+        return f"Onboarding Questions #{self.id}"
 
 class Recommendations(Base):
     __tablename__ = "recommendations"
@@ -158,6 +179,9 @@ class Recommendations(Base):
     
     # Relationships
     user = relationship("User")
+    
+    def __str__(self):
+        return f"Recommendations for User {self.user_id}"
     
     # Unique constraint to prevent duplicate recommendations for same user
     __table_args__ = (
@@ -178,6 +202,9 @@ class FeaturedSermon(Base):
     # Relationships
     church = relationship("Church", back_populates="featured_sermons")
     sermon = relationship("Sermon", back_populates="featured_in_churches")
+    
+    def __str__(self):
+        return f"Featured Sermon #{self.id} (Church {self.church_id} -> Sermon {self.sermon_id})"
     
     # Unique constraint to prevent duplicate featured sermons for same church
     __table_args__ = (
