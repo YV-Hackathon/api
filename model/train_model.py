@@ -13,19 +13,46 @@ from classes import PastorDataSet, RecSysModelFA
 
 from utils.model import collate_with_traits,build_mappings,run_epoch
 from utils.save_or_load import save_artifacts
+import os
+from sqlalchemy import create_engine
+from urllib.parse import quote_plus
 
-EPOCHS = 40
+# def get_engine():
+#     user = os.getenv("DB_USER", "fastapi")
+#     pwd = quote_plus(os.getenv("DB_PASSWORD", ""))  # URL-encode special chars
+#     host = os.getenv("DB_HOST", "34.71.154.21")
+#     port = int(os.getenv("DB_PORT", "5432"))
+#     db = os.getenv("DB_NAME", "fastapi_cms")
+#     return create_engine(
+#         f"postgresql+psycopg2://{user}:{'r>:?ve{2p!f1UfCL:]i{jFT9'}@{host}:{port}/{db}",
+#         pool_pre_ping=True,
+#     )
+
+# engine = get_engine()
+
+# df = pd.read_sql(
+#     """
+#     SELECT
+#         *
+#     FROM speakers
+#     """,
+#     engine
+# )
+
+# df.to_csv("speakers.csv", sep='\t', encoding='utf-8', index=False, header=True)
+# df.names
+# breakpoint()
+
+EPOCHS = 500
 SEED = 42
-
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-ratings_path = Path("data","pastor_ratings.csv").resolve()
-pastor_path = Path("data","pastor_traits.csv").resolve()
+ratings_path = Path("data","user_ratings.csv").resolve()
+pastor_path = Path("data","pastor_traits_mapped.csv").resolve()
 
 rating_df = pd.read_csv(ratings_path)
 pastor_df = pd.read_csv(pastor_path)
-
 
 rating_df.info()
 
