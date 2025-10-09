@@ -214,7 +214,6 @@ def get_sermon_recommendations(
             except Exception as e:
                 print(f"⚠️ AI recommendations failed, falling back to basic recommendations: {e}")
     
-<<<<<<< Updated upstream
     # Fallback to existing ML model
     ml_service = get_ml_service()
     
@@ -262,10 +261,6 @@ def get_sermon_recommendations(
     else:
         # Fallback: get sermons using basic preference matching
         sermons = _get_fallback_sermon_recommendations(user, db, limit)
-=======
-    # Fallback to basic preference-based recommendations
-    sermons = _get_fallback_sermon_recommendations(user, db, limit)
->>>>>>> Stashed changes
     
     # Convert to response format
     recommendations = []
