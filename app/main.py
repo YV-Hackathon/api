@@ -12,7 +12,7 @@ from app.admin import admin_app
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Church Management System API",
+    description="PewPal API",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     redirect_slashes=True
 )
