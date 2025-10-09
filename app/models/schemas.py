@@ -97,6 +97,7 @@ class ChurchBase(BaseModel):
     service_times: Optional[ServiceTimes] = None
     social_media: Optional[SocialMedia] = None
     image_url: Optional[str] = None
+    attributes: Optional[List[str]] = None
     is_active: bool = True
     sort_order: int = 0
 
@@ -116,6 +117,7 @@ class ChurchUpdate(BaseModel):
     service_times: Optional[ServiceTimes] = None
     social_media: Optional[SocialMedia] = None
     image_url: Optional[str] = None
+    attributes: Optional[List[str]] = None
     is_active: Optional[bool] = None
     sort_order: Optional[int] = None
 
@@ -146,6 +148,7 @@ class SpeakerBase(BaseModel):
     environment_style: EnvironmentStyle = EnvironmentStyle.BLENDED
     gender: Optional[Gender] = None
     profile_picture_url: Optional[str] = None
+    attributes: Optional[List[str]] = None
     is_recommended: bool = False
     
     @field_validator('speaking_topics', mode='before')
@@ -197,6 +200,7 @@ class SpeakerUpdate(BaseModel):
     environment_style: Optional[EnvironmentStyle] = None
     gender: Optional[Gender] = None
     profile_picture_url: Optional[str] = None
+    attributes: Optional[List[str]] = None
     is_recommended: Optional[bool] = None
     church_id: Optional[int] = None
 

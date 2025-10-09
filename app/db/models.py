@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Table, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Table, UniqueConstraint, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
@@ -29,6 +29,7 @@ class Church(Base):
     service_times = Column(JSON)  # Store as JSON
     social_media = Column(JSON)  # Store as JSON
     image_url = Column(String(500))  # URL to church image in GCS
+    attributes = Column(ARRAY(String))  # Array of free form strings
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -57,6 +58,7 @@ class Speaker(Base):
     environment_style = Column(SQLEnum(EnvironmentStyle), default=EnvironmentStyle.BLENDED)
     gender = Column(SQLEnum(Gender))
     profile_picture_url = Column(String(500))  # URL to profile picture in GCS
+    attributes = Column(ARRAY(String))  # Array of free form strings
     is_recommended = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
