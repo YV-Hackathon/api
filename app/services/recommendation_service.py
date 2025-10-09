@@ -6,12 +6,16 @@ and manages the storage/retrieval of recommendations in the database.
 """
 
 import json
+import logging
 import torch
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 from sqlalchemy.orm import Session
 from app.db import models
 from app.models.schemas import User
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Import your model utilities
 import sys
@@ -93,70 +97,110 @@ class MLRecommendationService:
         Returns:
             List of tuples (speaker_id, confidence_score)
         """
+        logger.info(f"Starting recommendation generation - limit: {limit}, model_loaded: {self.model_loaded}")
+        logger.debug(f"User preferences: {user_preferences}")
+        logger.debug(f"User swipes count: {len(user_swipes) if user_swipes else 0}")
+        
         if not self.model_loaded:
+            logger.warning("ML model not loaded, using fallback recommendations")
             return self._get_fallback_recommendations(limit, db)
         
         try:
             # This is a simplified version of your query_model.py logic
             device = next(self.model.parameters()).device
             d = self.model.user_embed.embedding_dim
+            logger.debug(f"Model device: {device}, embedding_dim: {d}")
             
             # Build preference vector from user traits
             trait_choices = user_preferences.get('trait_choices', [])
+            logger.debug(f"Trait choices from preferences: {trait_choices}")
+            
             trait_ids = self._traits_to_trait_ids(trait_choices)
+            logger.debug(f"Converted trait IDs: {trait_ids}")
+            
             p = self._build_preference_vector(trait_ids, device)
+            logger.debug(f"Preference vector shape: {p.shape}, norm: {p.norm().item():.4f}")
             
             # Build behavior vector from swipes if available
             u = torch.zeros(d, device=device)
             if user_swipes:
+                logger.debug(f"Building behavior vector from {len(user_swipes)} swipes")
                 u = self._build_behavior_vector(user_swipes, device)
+                logger.debug(f"Behavior vector shape: {u.shape}, norm: {u.norm().item():.4f}")
+            else:
+                logger.debug("No user swipes provided, using zero behavior vector")
             
             # Blend preferences and behavior
             alpha = 0.4
             q = (1 - alpha) * u + alpha * p
+            logger.debug(f"Blended query vector (alpha={alpha}) shape: {q.shape}, norm: {q.norm().item():.4f}")
             
             # Score all candidates
+            logger.debug("Starting candidate scoring...")
             candidate_scores = self._score_candidates(q, user_swipes or [], db)
+            logger.info(f"Scored {len(candidate_scores)} candidates")
+            
+            # If no candidates found, fall back to fallback recommendations
+            if not candidate_scores:
+                logger.warning("No candidates found in ML model, falling back to fallback recommendations")
+                return self._get_fallback_recommendations(limit, db)
             
             # Return top K recommendations
             top_k = min(limit, len(candidate_scores))
-            return candidate_scores[:top_k]
+            final_recommendations = candidate_scores[:top_k]
+            logger.info(f"Returning {len(final_recommendations)} recommendations (top {top_k} of {len(candidate_scores)})")
+            logger.debug(f"Top recommendations: {final_recommendations[:5]}")  # Log first 5 for debugging
+            
+            return final_recommendations
             
         except Exception as e:
-            print(f"Error generating ML recommendations: {e}")
+            logger.error(f"Error generating ML recommendations: {e}", exc_info=True)
             return self._get_fallback_recommendations(limit, db)
     
     def _traits_to_trait_ids(self, traits: List[str]) -> List[int]:
         """Convert trait names to trait IDs."""
         if not self.trait2idx:
+            logger.warning("trait2idx mapping not available")
             return []
         
         trait_ids = []
         for trait in traits:
             if trait in self.trait2idx:
                 trait_ids.append(self.trait2idx[trait])
+            else:
+                logger.debug(f"Trait '{trait}' not found in trait2idx mapping")
+        
+        logger.debug(f"Converted {len(traits)} traits to {len(trait_ids)} trait IDs")
         return trait_ids
     
     def _build_preference_vector(self, trait_ids: List[int], device) -> torch.Tensor:
         """Build preference vector from trait IDs."""
         if not trait_ids:
             d = self.model.user_embed.embedding_dim
+            logger.debug("No trait IDs provided, returning zero preference vector")
             return torch.zeros(d, device=device)
         
         idx = torch.tensor(trait_ids, dtype=torch.long, device=device)
         emb = self.model.trait_bag.weight.index_select(0, idx)
-        return emb.mean(dim=0)
+        result = emb.mean(dim=0)
+        logger.debug(f"Built preference vector from {len(trait_ids)} traits, shape: {result.shape}")
+        return result
     
     def _build_behavior_vector(self, user_swipes: List[Dict], device) -> torch.Tensor:
         """Build behavior vector from user swipes/ratings."""
         d = self.model.user_embed.embedding_dim
         liked_vs, disliked_vs = [], []
+        skipped_swipes = 0
+        
+        logger.debug(f"Processing {len(user_swipes)} swipes for behavior vector")
         
         for swipe in user_swipes:
             speaker_id = int(swipe.get('speaker_id', 0))
             rating = float(swipe.get('rating', 0))
             
             if speaker_id not in self.pastor2idx:
+                skipped_swipes += 1
+                logger.debug(f"Skipping swipe for speaker_id {speaker_id} (not in pastor2idx)")
                 continue
                 
             idx = self.pastor2idx[speaker_id]
@@ -170,17 +214,23 @@ class MLRecommendationService:
             else:
                 disliked_vs.append(v)
         
+        logger.debug(f"Processed swipes: {len(liked_vs)} liked, {len(disliked_vs)} disliked, {skipped_swipes} skipped")
+        
         v_like = torch.stack(liked_vs, dim=0).mean(0) if liked_vs else torch.zeros(d, device=device)
         v_dis = torch.stack(disliked_vs, dim=0).mean(0) if disliked_vs else torch.zeros(d, device=device)
         
-        return v_like - 0.5 * v_dis
+        result = v_like - 0.5 * v_dis
+        logger.debug(f"Behavior vector shape: {result.shape}, norm: {result.norm().item():.4f}")
+        return result
     
     def _score_candidates(self, query_vector: torch.Tensor, user_swipes: List[Dict], db: Session = None) -> List[Tuple[int, float]]:
         """Score all candidate speakers against the query vector."""
         device = query_vector.device
+        logger.debug(f"Scoring candidates on device: {device}")
         
         # Get already-swiped speaker IDs
         swiped_ids = {int(s.get('speaker_id', 0)) for s in user_swipes}
+        logger.debug(f"Swiped speaker IDs: {swiped_ids}")
         
         # Get speakers with sermons if DB session provided
         speakers_with_sermons = set()
@@ -188,21 +238,31 @@ class MLRecommendationService:
             from app.db import models
             speakers_with_sermons_query = db.query(models.Speaker.id).join(models.Sermon).distinct()
             speakers_with_sermons = {speaker.id for speaker in speakers_with_sermons_query.all()}
-            print(f"🎯 ML: Found {len(speakers_with_sermons)} speakers with sermons")
+            logger.info(f"Found {len(speakers_with_sermons)} speakers with sermons in database")
         
         # Get candidate indices (exclude already swiped and speakers without sermons)
         cand_idxs = []
+        excluded_swiped = 0
+        excluded_no_sermons = 0
+        
         for speaker_id, idx in self.pastor2idx.items():
             if speaker_id in swiped_ids:
+                excluded_swiped += 1
                 continue
             if db and speakers_with_sermons and speaker_id not in speakers_with_sermons:
+                excluded_no_sermons += 1
                 continue
             cand_idxs.append(idx)
         
+        logger.info(f"Found {len(cand_idxs)} candidate speakers out of {len(self.pastor2idx)} total speakers in model")
+        logger.debug(f"Excluded {excluded_swiped} already swiped speakers, {excluded_no_sermons} speakers without sermons")
+        
         if not cand_idxs:
+            logger.warning("No candidate speakers found - all speakers either swiped or don't have sermons")
             return []
         
         cand_idx_t = torch.tensor(cand_idxs, dtype=torch.long, device=device)
+        logger.debug(f"Created candidate tensor with shape: {cand_idx_t.shape}")
         
         # Build trait bags for all candidates
         flat, offsets, total = [], [0], 0
@@ -214,26 +274,33 @@ class MLRecommendationService:
         
         flat_t = torch.tensor(flat, dtype=torch.long, device=device)
         offsets_t = torch.tensor(offsets[:-1], dtype=torch.long, device=device)
+        logger.debug(f"Built trait bags: {len(flat)} total traits, {len(offsets)-1} candidates")
         
         # Calculate item vectors
         v_id = self.model.pastor_id_emb(cand_idx_t)
         v_feat = self.model.trait_bag(flat_t, offsets_t)
         V = v_id + v_feat
+        logger.debug(f"Item vectors shape: {V.shape}")
         
         # Calculate scores
         dot = (V * query_vector.unsqueeze(0)).sum(-1) / self.model._scale
         bias = self.model.global_bias + self.model.pastor_bias(cand_idx_t).squeeze(-1)
         scores = (dot + bias).detach().cpu()
+        logger.debug(f"Score statistics - min: {scores.min().item():.4f}, max: {scores.max().item():.4f}, mean: {scores.mean().item():.4f}")
         
         # Convert to (speaker_id, score) tuples and sort
         idx2speaker_id = {v: k for k, v in self.pastor2idx.items()}
         results = [(int(idx2speaker_id[cand_idxs[i]]), float(scores[i])) 
                    for i in range(len(cand_idxs))]
         
-        return sorted(results, key=lambda x: x[1], reverse=True)
+        sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
+        logger.debug(f"Top 3 scores: {sorted_results[:3]}")
+        return sorted_results
     
     def _get_fallback_recommendations(self, limit: int, db: Session = None) -> List[Tuple[int, float]]:
         """Generate fallback recommendations when ML model is not available."""
+        logger.info(f"Generating fallback recommendations with limit: {limit}")
+        
         if db:
             # Get speakers with sermons for realistic fallback
             from app.db import models
@@ -241,13 +308,15 @@ class MLRecommendationService:
                 models.Speaker.is_recommended == True
             ).distinct().limit(limit).all()
             
+            logger.debug(f"Found {len(speakers_with_sermons)} recommended speakers with sermons")
+            
             fallback_recs = []
             for i, speaker in enumerate(speakers_with_sermons):
                 # Assign decreasing scores
                 score = 0.95 - (i * 0.05)
                 fallback_recs.append((speaker.id, max(score, 0.5)))
             
-            print(f"🔄 Generated {len(fallback_recs)} fallback recommendations with sermons")
+            logger.info(f"Generated {len(fallback_recs)} fallback recommendations with sermons")
             return fallback_recs
         else:
             # Return mock recommendations - in production, you might want to use simple heuristics
@@ -256,6 +325,7 @@ class MLRecommendationService:
                 (1, 0.95), (2, 0.92), (3, 0.89), (4, 0.87), (5, 0.85),
                 (6, 0.83), (7, 0.81), (8, 0.79), (9, 0.77), (10, 0.75)
             ]
+            logger.info(f"Using mock recommendations (limit: {limit})")
             return mock_recommendations[:limit]
     
     def store_recommendations(
@@ -341,17 +411,23 @@ def trigger_recommendation_update(user_id: int, db: Session) -> bool:
     Returns:
         bool: True if recommendations were successfully updated, False otherwise
     """
+    logger.info(f"Triggering recommendation update for user {user_id}")
+    
     try:
         # Get the user
         user = db.query(models.User).filter(models.User.id == user_id).first()
         if not user:
-            print(f"⚠️ User {user_id} not found for recommendation update")
+            logger.warning(f"User {user_id} not found for recommendation update")
             return False
+        
+        logger.debug(f"Found user: {user.email if hasattr(user, 'email') else 'unknown'}")
         
         # Get user's sermon preferences to build user_swipes data
         sermon_preferences = db.query(models.UserSermonPreference).filter(
             models.UserSermonPreference.user_id == user_id
         ).all()
+        
+        logger.debug(f"Found {len(sermon_preferences)} sermon preferences for user {user_id}")
         
         # Convert sermon preferences to swipes format for ML model
         user_swipes = []
@@ -367,7 +443,7 @@ def trigger_recommendation_update(user_id: int, db: Session) -> bool:
                     'sermon_id': pref.sermon_id
                 })
         
-        print(f"🔄 Updating recommendations for user {user_id} based on {len(user_swipes)} sermon preferences")
+        logger.info(f"Updating recommendations for user {user_id} based on {len(user_swipes)} sermon preferences")
         
         # Build user preferences from profile
         user_preferences = {
@@ -377,6 +453,8 @@ def trigger_recommendation_update(user_id: int, db: Session) -> bool:
             'environment_style': user.environment_preference,
             'gender_preference': user.gender_preference
         }
+        
+        logger.debug(f"User preferences: {user_preferences}")
         
         # Generate new recommendations using ML model with user swipes
         ml_service = get_ml_service()
@@ -390,12 +468,12 @@ def trigger_recommendation_update(user_id: int, db: Session) -> bool:
         # Store the updated recommendations
         if speaker_recs:
             stored_recs = ml_service.store_recommendations(db, user_id, speaker_recs)
-            print(f"✅ Successfully updated recommendations for user {user_id}")
+            logger.info(f"Successfully updated recommendations for user {user_id} - stored {len(speaker_recs)} recommendations")
             return True
         else:
-            print(f"⚠️ No recommendations generated for user {user_id}")
+            logger.warning(f"No recommendations generated for user {user_id}")
             return False
             
     except Exception as e:
-        print(f"❌ Error updating recommendations for user {user_id}: {e}")
+        logger.error(f"Error updating recommendations for user {user_id}: {e}", exc_info=True)
         return False

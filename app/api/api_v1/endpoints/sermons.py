@@ -232,7 +232,7 @@ def get_sermon_recommendations(
         }
         
         # Generate speaker recommendations
-        speaker_recs = ml_service.generate_recommendations(user_preferences, limit=limit*2)  # Get more speakers to have enough sermons
+        speaker_recs = ml_service.generate_recommendations(user_preferences, limit=limit*2, db=db)  # Get more speakers to have enough sermons
         
         # Store the recommendations
         stored_recs = ml_service.store_recommendations(db, user_id, speaker_recs)
