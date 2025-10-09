@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.api_v1.endpoints import churches, speakers, users, onboarding, sermons, church_followers, speaker_followers, sermon_preferences, recommendations, featured_sermons
+from app.api.api_v1.endpoints import churches, speakers, users, onboarding, sermons, church_followers, speaker_followers, sermon_preferences, recommendations, featured_sermons, church_recommendations
 
 api_router = APIRouter()
 
@@ -13,3 +13,4 @@ api_router.include_router(speaker_followers.router, prefix="/speaker-followers",
 api_router.include_router(sermon_preferences.router, prefix="/sermon-preferences", tags=["sermon-preferences"])
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
 api_router.include_router(featured_sermons.router, prefix="/featured-sermons", tags=["featured-sermons"])
+api_router.include_router(church_recommendations.router, prefix="/church-recommendations", tags=["church-recommendations"])

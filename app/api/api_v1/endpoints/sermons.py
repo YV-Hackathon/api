@@ -8,6 +8,7 @@ from app.models.schemas import (
     SermonRecommendationsResponse, SermonRecommendation, SpeakerInfo
 )
 from app.services.recommendation_service import get_ml_service
+from app.services.ai_embedding_service import get_ai_service
 
 router = APIRouter()
 
@@ -115,14 +116,106 @@ def get_sermon_recommendations(
     user_id: int, 
     limit: int = Query(10, ge=1, le=50),
     refresh: bool = Query(False, description="Force refresh of recommendations"),
+    use_ai: bool = Query(True, description="Use AI-powered recommendations"),
     db: Session = Depends(get_db)
 ):
-    """Get recommended sermon clips for a user based on ML model speaker recommendations"""
+    """Get recommended sermon clips for a user based on AI embeddings or ML model"""
     # Verify that the user exists
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Try AI recommendations first if enabled
+    if use_ai:
+        ai_service = get_ai_service()
+        if ai_service.is_available():
+            try:
+                # Check for stored AI recommendations first (unless refresh forced)
+                stored_ai_recs = None
+                if not refresh:
+                    stored_ai_recs = ai_service.get_stored_ai_recommendations(db, user_id)
+                    
+                    # Check if stored recommendations are still fresh
+                    if stored_ai_recs and not ai_service.should_refresh_recommendations(stored_ai_recs, max_age_hours=24):
+                        print(f"📂 Using cached AI recommendations for user {user_id}")
+                        # Use stored recommendations
+                        ai_speaker_recs = list(zip(stored_ai_recs.speaker_ids, stored_ai_recs.scores or []))
+                    else:
+                        stored_ai_recs = None  # Force regeneration
+                
+                # Generate fresh AI recommendations if no valid cache
+                if stored_ai_recs is None or refresh:
+                    print(f"🤖 Generating fresh AI recommendations for user {user_id}")
+                    
+                    # Get user's selected speakers for context
+                    selected_speakers = db.query(models.Speaker).join(models.UserSpeakerPreference).filter(
+                        models.UserSpeakerPreference.user_id == user_id
+                    ).all()
+                    
+                    selected_speaker_names = [speaker.name for speaker in selected_speakers]
+                    
+                    # Get AI-powered speaker recommendations with learning
+                    ai_speaker_recs = ai_service.get_ai_recommendations_with_learning(
+                        user, 
+                        selected_speaker_names, 
+                        limit=limit*2,  # Get more speakers to have enough sermons
+                        force_refresh=refresh,
+                        db=db  # Pass database session for learning from ratings
+                    )
+                    
+                    # Store the fresh AI recommendations in database
+                    if ai_speaker_recs:
+                        ai_service.store_ai_recommendations(db, user_id, ai_speaker_recs)
+                
+                if ai_speaker_recs:
+                    # Get sermon recommendations based on AI speaker recommendations
+                    ai_sermon_recs = ai_service.get_sermon_recommendations_by_speakers(
+                        ai_speaker_recs, db, limit
+                    )
+                    
+                    if ai_sermon_recs:
+                        # Convert to expected response format
+                        recommendations = []
+                        for rec in ai_sermon_recs:
+                            speaker_info = SpeakerInfo(
+                                id=rec["speaker"]["id"],
+                                name=rec["speaker"]["name"],
+                                title=rec["speaker"]["title"],
+                                teaching_style=rec["speaker"]["teaching_style"],
+                                bible_approach=rec["speaker"]["bible_approach"],
+                                environment_style=rec["speaker"]["environment_style"],
+                                gender=rec["speaker"]["gender"]
+                            )
+                            
+                            sermon_rec = SermonRecommendation(
+                                sermon_id=rec["sermon_id"],
+                                title=rec["title"],
+                                description=rec["description"],
+                                gcs_url=rec["gcs_url"],
+                                speaker=speaker_info,
+                                matching_preferences=[rec["matching_reason"]],
+                                recommendation_score=rec["recommendation_score"]
+                            )
+                            recommendations.append(sermon_rec)
+                        
+                        # Get user preferences for context
+                        user_preferences = {
+                            "teaching_style_preference": user.teaching_style_preference,
+                            "bible_reading_preference": user.bible_reading_preference,
+                            "environment_preference": user.environment_preference,
+                            "gender_preference": user.gender_preference
+                        }
+                        
+                        return SermonRecommendationsResponse(
+                            recommendations=recommendations,
+                            total_count=len(recommendations),
+                            user_preferences=user_preferences
+                        )
+                        
+            except Exception as e:
+                print(f"⚠️ AI recommendations failed, falling back to ML model: {e}")
+    
+    # Fallback to existing ML model
     ml_service = get_ml_service()
     
     # Get stored recommendations or generate new ones

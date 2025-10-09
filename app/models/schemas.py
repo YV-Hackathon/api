@@ -19,6 +19,10 @@ class EnvironmentStyle(str, Enum):
     TRADITIONAL = "TRADITIONAL"
     CONTEMPORARY = "CONTEMPORARY"
     BLENDED = "BLENDED"
+    
+class Gender(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
 
 class TopicCategory(str, Enum):
     PREACHING = "PREACHING"

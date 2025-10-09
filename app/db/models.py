@@ -117,6 +117,25 @@ class UserSpeakerPreference(Base):
     user = relationship("User")
     speaker = relationship("Speaker")
 
+class UserSermonPreference(Base):
+    __tablename__ = "user_sermon_preferences"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    sermon_id = Column(Integer, ForeignKey("sermons.id"), nullable=False, index=True)
+    preference = Column(String(15), nullable=False, index=True)  # 'thumbs_up' or 'thumbs_down'
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    sermon = relationship("Sermon")
+    
+    # Unique constraint to prevent duplicate preferences for same user-sermon pair
+    __table_args__ = (
+        UniqueConstraint('user_id', 'sermon_id', name='uq_user_sermon_preference'),
+    )
+
 class OnboardingQuestion(Base):
     __tablename__ = "onboarding_questions"
     
