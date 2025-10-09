@@ -1,12 +1,39 @@
 # Cloud Build configuration for building and deploying FastAPI CMS
 steps:
-  # Build the Docker image
+  # Build the Docker image with caching optimizations
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest', '.']
+    args: 
+      - 'build'
+      - '--cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
+      - '--cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:${SHORT_SHA}'
+      - '.'
 
-  # Push the image to Artifact Registry
+  # Push both tags to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest']
+    args: 
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:${SHORT_SHA}'
+  
+  # Tag and push cache image for future builds
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'tag'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache'
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -30,6 +57,9 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'E2_HIGHCPU_8'
+  # Enable Docker BuildKit for better caching
+  env:
+    - 'DOCKER_BUILDKIT=1'
 
 timeout: '1200s'
 
