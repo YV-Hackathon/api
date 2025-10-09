@@ -327,3 +327,75 @@ ml_service = MLRecommendationService()
 def get_ml_service() -> MLRecommendationService:
     """Get the global ML recommendation service instance."""
     return ml_service
+
+
+def trigger_recommendation_update(user_id: int, db: Session) -> bool:
+    """
+    Trigger a recommendation update for a user based on their latest sermon preferences.
+    This is called automatically when users submit sermon preferences.
+    
+    Args:
+        user_id: The user ID to update recommendations for
+        db: Database session
+        
+    Returns:
+        bool: True if recommendations were successfully updated, False otherwise
+    """
+    try:
+        # Get the user
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            print(f"⚠️ User {user_id} not found for recommendation update")
+            return False
+        
+        # Get user's sermon preferences to build user_swipes data
+        sermon_preferences = db.query(models.UserSermonPreference).filter(
+            models.UserSermonPreference.user_id == user_id
+        ).all()
+        
+        # Convert sermon preferences to swipes format for ML model
+        user_swipes = []
+        for pref in sermon_preferences:
+            # Get the sermon to access speaker_id
+            sermon = db.query(models.Sermon).filter(models.Sermon.id == pref.sermon_id).first()
+            if sermon:
+                # Convert thumbs_up/thumbs_down to numerical rating
+                rating = 5.0 if pref.preference == 'thumbs_up' else 2.0
+                user_swipes.append({
+                    'speaker_id': sermon.speaker_id,
+                    'rating': rating,
+                    'sermon_id': pref.sermon_id
+                })
+        
+        print(f"🔄 Updating recommendations for user {user_id} based on {len(user_swipes)} sermon preferences")
+        
+        # Build user preferences from profile
+        user_preferences = {
+            'trait_choices': [],  # Could be populated from user traits if available
+            'teaching_style': user.teaching_style_preference,
+            'bible_approach': user.bible_reading_preference,
+            'environment_style': user.environment_preference,
+            'gender_preference': user.gender_preference
+        }
+        
+        # Generate new recommendations using ML model with user swipes
+        ml_service = get_ml_service()
+        speaker_recs = ml_service.generate_recommendations(
+            user_preferences=user_preferences,
+            user_swipes=user_swipes,
+            limit=20,
+            db=db
+        )
+        
+        # Store the updated recommendations
+        if speaker_recs:
+            stored_recs = ml_service.store_recommendations(db, user_id, speaker_recs)
+            print(f"✅ Successfully updated recommendations for user {user_id}")
+            return True
+        else:
+            print(f"⚠️ No recommendations generated for user {user_id}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error updating recommendations for user {user_id}: {e}")
+        return False
