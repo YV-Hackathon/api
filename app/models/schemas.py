@@ -39,11 +39,19 @@ class Gender(str, Enum):
 
 # Base schemas
 class Address(BaseModel):
-    street: str
-    city: str
-    state: str
-    zip_code: str
-    country: str
+    street: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: Optional[str] = None
+    
+    @model_validator(mode='before')
+    @classmethod
+    def validate_address(cls, v):
+        # Handle case where address is stored as boolean True instead of dict
+        if isinstance(v, bool) or v is None:
+            return {}
+        return v
 
 class ServiceTimes(BaseModel):
     sunday: Optional[List[str]] = None
@@ -61,6 +69,14 @@ class SocialMedia(BaseModel):
     twitter: Optional[str] = None
     youtube: Optional[str] = None
     linkedin: Optional[str] = None
+    
+    @model_validator(mode='before')
+    @classmethod
+    def validate_social_media(cls, v):
+        # Handle case where social_media is stored as boolean True instead of dict
+        if isinstance(v, bool) or v is None:
+            return {}
+        return v
 
 class SpeakingTopic(BaseModel):
     name: str
