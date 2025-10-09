@@ -1,39 +1,47 @@
 # Cloud Build configuration for building and deploying FastAPI CMS
 steps:
-  # Build the Docker image with caching optimizations
+  # Pull cache images (ignore errors if they don't exist yet)
   - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'build'
-      - '--cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
-      - '--cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:${SHORT_SHA}'
-      - '.'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔄 Pulling cache images..."
+        docker pull ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest || echo "⚠️  No latest image found, continuing..."
+        docker pull ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache || echo "⚠️  No cache image found, continuing..."
+        echo "✅ Cache pull completed"
 
-  # Push both tags to Artifact Registry
+  # Build the Docker image with BuildKit and caching optimizations
   - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'push'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
-  
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔨 Building with BuildKit and cache optimization..."
+        DOCKER_BUILDKIT=1 docker build \
+          --cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest \
+          --cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest \
+          -t ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:${SHORT_SHA} \
+          .
+        echo "✅ Build completed"
+
+  # Push images to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'push'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:${SHORT_SHA}'
-  
-  # Tag and push cache image for future builds
-  - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'tag'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache'
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'push'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "📤 Pushing images to Artifact Registry..."
+        docker push ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest
+        docker push ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:${SHORT_SHA}
+        
+        # Tag and push cache image for future builds
+        echo "🏷️  Creating cache tag..."
+        docker tag ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:latest ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache
+        docker push ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_ID}/fastapi-cms:cache
+        echo "✅ All images pushed successfully"
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'

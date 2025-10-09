@@ -1,9 +1,12 @@
+# syntax=docker/dockerfile:1
 FROM python:3.13-slim
 
 WORKDIR /app
 
 # Install system dependencies (this layer will be cached unless system deps change)
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y \
     gcc \
     g++ \
     postgresql-client \
@@ -12,8 +15,9 @@ RUN apt-get update && apt-get install -y \
 # Copy only requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies (this layer will be cached unless requirements.txt changes)
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies with BuildKit cache mount
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
 
 # Create startup script early (this layer will be cached)
 RUN echo '#!/bin/bash\n\
