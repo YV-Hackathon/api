@@ -20,10 +20,6 @@ class EnvironmentStyle(str, Enum):
     CONTEMPORARY = "CONTEMPORARY"
     BLENDED = "BLENDED"
     
-class Gender(str, Enum):
-    MALE = "MALE"
-    FEMALE = "FEMALE"
-
 class TopicCategory(str, Enum):
     PREACHING = "PREACHING"
     TEACHING = "TEACHING"
@@ -296,6 +292,7 @@ class OnboardingAnswer(BaseModel):
     bible_reading_preference: Optional[BibleApproach] = None
     teaching_style_preference: Optional[TeachingStyle] = None
     environment_preference: Optional[EnvironmentStyle] = None
+    gender_preference: Optional[str] = None  # Accepts "Male", "Female", "Either" from frontend
 
 class OnboardingSubmit(BaseModel):
     user_id: int

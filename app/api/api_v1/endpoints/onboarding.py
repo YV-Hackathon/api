@@ -16,33 +16,33 @@ router = APIRouter()
 # Static onboarding questions (matching the Strapi structure)
 ONBOARDING_QUESTIONS = [
     {
-        "id": "speakers",
-        "title": "Select Speakers That Interest You",
-        "description": "Choose speakers whose messages resonate with you",
-        "type": "multi-select",
-        "options": []  # Will be populated dynamically
-    },
-    {
         "id": "bibleReadingPreference",
-        "title": "When you read the Bible, what's most helpful for you?",
+        "title": "When you listen to a sermon, what do you prefer most?",
         "description": "Select the approach that helps you most",
         "type": "single-select",
         "options": [
-            {"value": "More Scripture", "label": "Focused on reading large sections of the text"},
-            {"value": "Life Application", "label": "Practical guidance for everyday life"},
-            {"value": "Balanced", "label": "A mix of both Scripture and life application"}
+            {"value": "Life Application", "label": "Practical, everyday life application"},
+            {"value": "More Scripture", "label": "Deep, verse-by-verse Scripture teaching"},
+            {"value": "Balanced", "label": "A balance of both"}
         ]
     },
     {
         "id": "teachingStylePreference",
-        "title": "What style of teaching do you connect with most?",
+        "title": "Which teaching style helps you connect best?",
         "description": "Choose the teaching style that resonates with you",
         "type": "single-select",
         "options": [
-            {"value": "Academic", "label": "In-depth explanations and context"},
-            {"value": "Relatable", "label": "Everyday examples that connect to your life"},
-            {"value": "Balanced", "label": "A balance of depth and accessibility"}
+            {"value": "Warm", "label": "Warm and conversational"},
+            {"value": "Calm", "label": "Calm and reflective"},
+            {"value": "Passionate", "label": "Passionate and high-energy"}
         ]
+    },
+    {
+        "id": "genderPreference",
+        "title": "Do you have a preference for who teaches?",
+        "description": "Choose the gender that resonates with you",
+        "type": "single-select",
+        "options": [{"value": "Male", "label": "Male pastor"}, {"value": "Female", "label": "Female pastor"}, {"value": "Either", "label": "No preference"}]
     },
     {
         "id": "environmentPreference",
@@ -50,11 +50,18 @@ ONBOARDING_QUESTIONS = [
         "description": "Select the church environment that appeals to you",
         "type": "single-select",
         "options": [
-            {"value": "Traditional", "label": "Hymns, liturgy and structured services"},
-            {"value": "Contemporary", "label": "Modern worship and casual style"},
-            {"value": "Blended", "label": "A mix of traditional and modern services"}
+            {"value": "Traditional", "label": "Traditional"},
+            {"value": "Contemporary", "label": "Contemporary"},
+            {"value": "Blended", "label": "Blended"}
         ]
-    }
+    },
+    {
+        "id": "speakers",
+        "title": "Select Speakers That Interest You",
+        "description": "Choose speakers whose messages resonate with you",
+        "type": "multi-select",
+        "options": []  # Will be populated dynamically
+    },
 ]
 
 @router.get("/questions", response_model=List[OnboardingQuestion])
@@ -99,6 +106,19 @@ def submit_onboarding_answers(
     user.bible_reading_preference = answers.bible_reading_preference
     user.teaching_style_preference = answers.teaching_style_preference
     user.environment_preference = answers.environment_preference
+    
+    # Handle gender preference mapping from frontend values to enum values
+    if answers.gender_preference:
+        if answers.gender_preference == "Male":
+            user.gender_preference = "MALE"
+        elif answers.gender_preference == "Female":
+            user.gender_preference = "FEMALE"
+        # "Either" means no preference, so we leave it as None
+        elif answers.gender_preference == "Either":
+            user.gender_preference = None
+        else:
+            user.gender_preference = answers.gender_preference
+    
     user.onboarding_completed = True
     
     # Update speaker preferences
@@ -161,6 +181,9 @@ def get_recommended_speakers(user, db: Session) -> List[models.Speaker]:
     
     if user.environment_preference:
         query = query.filter(models.Speaker.environment_style == user.environment_preference)
+    
+    if user.gender_preference:
+        query = query.filter(models.Speaker.gender == user.gender_preference)
     
     # Get recommended speakers
     recommended_speakers = query.all()
