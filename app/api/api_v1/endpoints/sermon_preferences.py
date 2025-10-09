@@ -7,7 +7,7 @@ from app.models.schemas import (
     SermonPreference, SermonPreferenceCreate, SermonPreferenceUpdate,
     SermonPreferenceWithDetails, SermonPreferencesBatch, SermonPreferenceType
 )
-from app.services.recommendation_service import trigger_recommendation_update
+from app.services.ai_embedding_service import trigger_ai_recommendation_update
 
 router = APIRouter()
 
@@ -39,9 +39,9 @@ def create_sermon_preference(
         db.commit()
         db.refresh(existing_preference)
         
-        # Trigger recommendation update
-        print(f"🔄 Triggering recommendation update for user {preference.user_id} after preference update")
-        trigger_recommendation_update(preference.user_id, db)
+        # Trigger AI recommendation update
+        print(f"🔄 Triggering AI recommendation update for user {preference.user_id} after preference update")
+        trigger_ai_recommendation_update(preference.user_id, db)
         
         return existing_preference
     else:
@@ -55,9 +55,9 @@ def create_sermon_preference(
         db.commit()
         db.refresh(db_preference)
         
-        # Trigger recommendation update
-        print(f"🔄 Triggering recommendation update for user {preference.user_id} after new preference")
-        trigger_recommendation_update(preference.user_id, db)
+        # Trigger AI recommendation update
+        print(f"🔄 Triggering AI recommendation update for user {preference.user_id} after new preference")
+        trigger_ai_recommendation_update(preference.user_id, db)
         
         return db_preference
 
@@ -116,9 +116,9 @@ def create_sermon_preferences_batch(
     for pref in created_preferences:
         db.refresh(pref)
     
-    # Trigger recommendation update after batch processing
-    print(f"🔄 Triggering recommendation update for user {batch.user_id} after batch preference submission ({len(created_preferences)} preferences)")
-    trigger_recommendation_update(batch.user_id, db)
+    # Trigger AI recommendation update after batch processing
+    print(f"🔄 Triggering AI recommendation update for user {batch.user_id} after batch preference submission ({len(created_preferences)} preferences)")
+    trigger_ai_recommendation_update(batch.user_id, db)
     
     return created_preferences
 
@@ -192,9 +192,9 @@ def update_sermon_preference(
     db.commit()
     db.refresh(preference)
     
-    # Trigger recommendation update
-    print(f"🔄 Triggering recommendation update for user {preference.user_id} after preference update")
-    trigger_recommendation_update(preference.user_id, db)
+    # Trigger AI recommendation update
+    print(f"🔄 Triggering AI recommendation update for user {preference.user_id} after preference update")
+    trigger_ai_recommendation_update(preference.user_id, db)
     
     return preference
 
@@ -217,9 +217,9 @@ def delete_sermon_preference(
     db.delete(preference)
     db.commit()
     
-    # Trigger recommendation update after deletion
-    print(f"🔄 Triggering recommendation update for user {user_id} after preference deletion")
-    trigger_recommendation_update(user_id, db)
+    # Trigger AI recommendation update after deletion
+    print(f"🔄 Triggering AI recommendation update for user {user_id} after preference deletion")
+    trigger_ai_recommendation_update(user_id, db)
     
     return {"message": "Sermon preference deleted successfully"}
 

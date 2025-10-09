@@ -767,3 +767,60 @@ ai_service = AIEmbeddingService()
 def get_ai_service() -> AIEmbeddingService:
     """Get the global AI embedding service instance"""
     return ai_service
+
+
+def trigger_ai_recommendation_update(user_id: int, db: Session) -> bool:
+    """
+    Trigger an AI recommendation update for a user based on their latest sermon preferences.
+    This is called automatically when users submit sermon preferences.
+    
+    Args:
+        user_id: The user ID to update recommendations for
+        db: Database session
+        
+    Returns:
+        bool: True if recommendations were successfully updated, False otherwise
+    """
+    try:
+        # Get the user
+        from app.db import models
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            print(f"⚠️ User {user_id} not found for AI recommendation update")
+            return False
+        
+        # Get AI service
+        ai_service = get_ai_service()
+        if not ai_service.is_available():
+            print(f"⚠️ AI service not available for user {user_id} recommendation update")
+            return False
+        
+        # Get user's selected speakers for context (if any)
+        selected_speakers = db.query(models.Speaker).join(models.UserSpeakerPreference).filter(
+            models.UserSpeakerPreference.user_id == user_id
+        ).all()
+        selected_speaker_names = [speaker.name for speaker in selected_speakers]
+        
+        print(f"🤖 Generating fresh AI recommendations for user {user_id} based on sermon preferences")
+        
+        # Generate fresh AI recommendations with learning from sermon preferences
+        ai_speaker_recs = ai_service.get_ai_recommendations_with_learning(
+            user, 
+            selected_speaker_names, 
+            limit=20,  # Get a good number of recommendations
+            force_refresh=True,  # Force fresh generation
+            db=db  # Pass database session for learning from ratings
+        )
+        
+        # Store the updated recommendations
+        if ai_speaker_recs:
+            ai_service.store_ai_recommendations(db, user_id, ai_speaker_recs)
+            print(f"✅ Successfully updated AI recommendations for user {user_id} ({len(ai_speaker_recs)} speakers)")
+            return True
+        else:
+            print(f"⚠️ No AI recommendations generated for user {user_id}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error updating AI recommendations for user {user_id}: {e}")
+        return False

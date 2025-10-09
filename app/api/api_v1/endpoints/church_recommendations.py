@@ -12,17 +12,21 @@ def get_church_recommendations(
     user_id: int,
     limit: int = Query(10, ge=1, le=50, description="Maximum number of church recommendations"),
     min_ratings: int = Query(3, ge=1, description="Minimum sermon ratings required for recommendations"),
+    force_refresh: bool = Query(False, description="Force refresh of AI recommendations"),
     db: Session = Depends(get_db)
 ):
-    """Get personalized church recommendations based on user's sermon ratings and preferences
+    """Get personalized church recommendations using AI embeddings
     
-    This endpoint analyzes:
-    - Which speakers the user liked/disliked from sermon clips
-    - User's stated preferences from onboarding
-    - Churches associated with liked speakers
-    - Church characteristics that match user preferences
+    This endpoint uses AI embeddings to provide intelligent church recommendations:
     
-    Returns churches ranked by compatibility score with explanations.
+    **AI Embedding Approach**:
+    - Uses semantic similarity between user preferences and speaker characteristics
+    - Leverages AI embeddings for nuanced matching based on teaching style, content, and approach
+    - Learns from user feedback on sermon preferences to improve recommendations
+    - Analyzes liked/disliked speakers from sermon clips to understand user preferences
+    - Aggregates speaker compatibility into church recommendations with detailed explanations
+    
+    Returns churches ranked by AI-calculated compatibility score with detailed reasoning.
     """
     
     # Verify user exists
@@ -58,6 +62,7 @@ def get_church_recommendations(
         )
     
     try:
+        # Use AI embeddings for church recommendations
         church_recommendations = ai_service.get_church_recommendations(user, db, limit)
         
         if not church_recommendations:
@@ -221,3 +226,4 @@ def _get_fallback_church_recommendations(user: models.User, db: Session, limit: 
         recommendations.append(recommendation)
     
     return recommendations
+

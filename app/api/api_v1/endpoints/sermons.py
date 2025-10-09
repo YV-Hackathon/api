@@ -7,7 +7,6 @@ from app.models.schemas import (
     Sermon, SermonCreate, SermonUpdate, SermonWithSpeaker,
     SermonRecommendationsResponse, SermonRecommendation, SpeakerInfo
 )
-from app.services.recommendation_service import get_ml_service
 from app.services.ai_embedding_service import get_ai_service
 
 router = APIRouter()
@@ -213,8 +212,9 @@ def get_sermon_recommendations(
                         )
                         
             except Exception as e:
-                print(f"⚠️ AI recommendations failed, falling back to ML model: {e}")
+                print(f"⚠️ AI recommendations failed, falling back to basic recommendations: {e}")
     
+<<<<<<< Updated upstream
     # Fallback to existing ML model
     ml_service = get_ml_service()
     
@@ -262,12 +262,15 @@ def get_sermon_recommendations(
     else:
         # Fallback: get sermons using basic preference matching
         sermons = _get_fallback_sermon_recommendations(user, db, limit)
+=======
+    # Fallback to basic preference-based recommendations
+    sermons = _get_fallback_sermon_recommendations(user, db, limit)
+>>>>>>> Stashed changes
     
     # Convert to response format
     recommendations = []
-    speaker_score_map = dict(zip(stored_recs.speaker_ids, stored_recs.scores or [])) if stored_recs else {}
     
-    for sermon in sermons:
+    for i, sermon in enumerate(sermons):
         # Create matching preferences based on user preferences
         matching_preferences = []
         if user.teaching_style_preference and user.teaching_style_preference == sermon.speaker.teaching_style:
@@ -293,8 +296,8 @@ def get_sermon_recommendations(
             gender=sermon.speaker.gender
         )
         
-        # Get recommendation score from ML model
-        recommendation_score = speaker_score_map.get(sermon.speaker_id, 0.5)
+        # Use decreasing scores for fallback recommendations
+        recommendation_score = 0.8 - (i * 0.05)
         
         recommendation = SermonRecommendation(
             sermon_id=sermon.id,
@@ -303,7 +306,7 @@ def get_sermon_recommendations(
             gcs_url=sermon.gcs_url,
             speaker=speaker_info,
             matching_preferences=matching_preferences,
-            recommendation_score=recommendation_score
+            recommendation_score=max(recommendation_score, 0.3)
         )
         recommendations.append(recommendation)
     
