@@ -8,7 +8,7 @@ from app.models.schemas import (
     OnboardingSubmit, 
     OnboardingResponse,
     UserWithPreferences,
-    SpeakerWithChurch
+    SermonWithSpeakerAndChurch
 )
 
 router = APIRouter()
@@ -122,6 +122,9 @@ def submit_onboarding_answers(
     # Get recommended speakers based on preferences
     recommended_speakers = get_recommended_speakers(user, db)
     
+    # Get sermons from recommended speakers (limit to 5)
+    recommended_sermons = get_recommended_sermons_from_speakers(recommended_speakers, db, limit=5)
+    
     # Get user's preferred speakers
     preferred_speakers = db.query(models.Speaker).join(models.UserSpeakerPreference).filter(
         models.UserSpeakerPreference.user_id == submission.user_id
@@ -132,19 +135,20 @@ def submit_onboarding_answers(
     
     return OnboardingResponse(
         user=user_dict,
-        recommended_speakers=recommended_speakers
+        recommended_sermons=recommended_sermons
     )
 
-@router.get("/recommendations/{user_id}", response_model=List[SpeakerWithChurch])
+@router.get("/recommendations/{user_id}", response_model=List[SermonWithSpeakerAndChurch])
 def get_user_recommendations(user_id: int, db: Session = Depends(get_db)):
-    """Get personalized recommendations for a user"""
+    """Get personalized sermon recommendations for a user"""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    return get_recommended_speakers(user, db)
+    recommended_speakers = get_recommended_speakers(user, db)
+    return get_recommended_sermons_from_speakers(recommended_speakers, db, limit=5)
 
-def get_recommended_speakers(user, db: Session) -> List[SpeakerWithChurch]:
+def get_recommended_speakers(user, db: Session) -> List[models.Speaker]:
     """Get recommended speakers based on user preferences"""
     query = db.query(models.Speaker)
     
@@ -166,3 +170,46 @@ def get_recommended_speakers(user, db: Session) -> List[SpeakerWithChurch]:
         recommended_speakers = db.query(models.Speaker).all()
     
     return recommended_speakers
+
+def get_recommended_sermons_from_speakers(speakers: List[models.Speaker], db: Session, limit: int = 5) -> List[models.Sermon]:
+    """Get sermons from recommended speakers with full speaker and church data"""
+    if not speakers:
+        return []
+    
+    # Get speaker IDs
+    speaker_ids = [speaker.id for speaker in speakers]
+    
+    # Query sermons from these speakers with speaker and church data included
+    # Use joinedload to ensure church data is loaded with the speaker
+    from sqlalchemy.orm import joinedload
+    
+    sermons_query = db.query(models.Sermon).options(
+        joinedload(models.Sermon.speaker).joinedload(models.Speaker.church)
+    ).filter(
+        models.Sermon.speaker_id.in_(speaker_ids)
+    ).order_by(models.Sermon.created_at.desc())
+    
+    # Get the sermons with speaker and church data
+    sermons = sermons_query.limit(limit).all()
+    
+    # If we don't have enough sermons from recommended speakers, fill with others
+    if len(sermons) < limit:
+        additional_needed = limit - len(sermons)
+        existing_sermon_ids = [sermon.id for sermon in sermons]
+        
+        additional_sermons = db.query(models.Sermon).options(
+            joinedload(models.Sermon.speaker).joinedload(models.Speaker.church)
+        ).filter(
+            ~models.Sermon.id.in_(existing_sermon_ids)
+        ).order_by(models.Sermon.created_at.desc()).limit(additional_needed).all()
+        
+        sermons.extend(additional_sermons)
+    
+    print(f"✅ Retrieved {len(sermons)} recommended sermons with church data from {len(speakers)} speakers")
+    
+    # Log church information to verify it's loaded
+    for sermon in sermons[:3]:  # Show first 3 for debugging
+        church_name = sermon.speaker.church.name if sermon.speaker and sermon.speaker.church else "No Church"
+        print(f"   📖 '{sermon.title}' by {sermon.speaker.name} from {church_name}")
+    
+    return sermons

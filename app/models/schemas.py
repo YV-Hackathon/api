@@ -244,6 +244,9 @@ class Sermon(SermonBase):
 class SermonWithSpeaker(Sermon):
     speaker: Optional[Speaker] = None
 
+class SermonWithSpeakerAndChurch(Sermon):
+    speaker: Optional[SpeakerWithChurch] = None
+
 # User schemas
 class UserBase(BaseModel):
     username: str
@@ -300,7 +303,7 @@ class OnboardingSubmit(BaseModel):
 
 class OnboardingResponse(BaseModel):
     user: UserWithPreferences
-    recommended_speakers: List[SpeakerWithChurch]
+    recommended_sermons: List[SermonWithSpeakerAndChurch]
 
 # Church Followers schemas
 class ChurchFollowersBase(BaseModel):
