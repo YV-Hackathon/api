@@ -665,20 +665,13 @@ class AIEmbeddingService:
         liked_church_ids: List[int],
         db: Session
     ) -> List[str]:
-        """Get human-readable reasons for church recommendation"""
+        """Get single-word reasons for church recommendation (for pills)"""
         
         reasons = []
         
         # Check if user liked speakers from this church
         if church.id in liked_church_ids:
-            church_speakers = db.query(models.Speaker).filter(
-                models.Speaker.church_id == church.id,
-                models.Speaker.id.in_(liked_speaker_ids)
-            ).all()
-            
-            if church_speakers:
-                speaker_names = [s.name for s in church_speakers]
-                reasons.append(f"You liked sermons from {', '.join(speaker_names)} who minister here")
+            reasons.append("Familiar")
         
         # Check preference alignments
         church_speakers = db.query(models.Speaker).filter(
@@ -686,25 +679,48 @@ class AIEmbeddingService:
         ).all()
         
         if church_speakers:
-            matching_styles = []
             for speaker in church_speakers:
                 if user.teaching_style_preference and speaker.teaching_style == user.teaching_style_preference:
-                    matching_styles.append("teaching style")
-                    break
-            for speaker in church_speakers:
-                if user.bible_reading_preference and speaker.bible_approach == user.bible_reading_preference:
-                    matching_styles.append("Bible approach")
-                    break
-            for speaker in church_speakers:
-                if user.environment_preference and speaker.environment_style == user.environment_preference:
-                    matching_styles.append("worship environment")
+                    if user.teaching_style_preference.value == "warm_and_conversational":
+                        reasons.append("Conversational")
+                    elif user.teaching_style_preference.value == "passionate_and_high_energy":
+                        reasons.append("Energetic")
+                    elif user.teaching_style_preference.value == "calm_and_reflective":
+                        reasons.append("Reflective")
                     break
             
-            if matching_styles:
-                reasons.append(f"Speakers here match your preferred {' and '.join(matching_styles)}")
+            for speaker in church_speakers:
+                if user.bible_reading_preference and speaker.bible_approach == user.bible_reading_preference:
+                    if user.bible_reading_preference.value == "more_scripture":
+                        reasons.append("Scripture-focused")
+                    elif user.bible_reading_preference.value == "more_application":
+                        reasons.append("Practical")
+                    elif user.bible_reading_preference.value == "balanced":
+                        reasons.append("Balanced")
+                    break
+            
+            for speaker in church_speakers:
+                if user.environment_preference and speaker.environment_style == user.environment_preference:
+                    if user.environment_preference.value == "traditional":
+                        reasons.append("Traditional")
+                    elif user.environment_preference.value == "contemporary":
+                        reasons.append("Contemporary")
+                    elif user.environment_preference.value == "blended":
+                        reasons.append("Blended")
+                    break
         
-        # Add denomination/size info
-        reasons.append(f"{church.denomination} church with {church.membership_count or 'unknown'} members")
+        # Add denomination as a single word
+        if church.denomination:
+            reasons.append(church.denomination)
+        
+        # Add size category
+        if church.membership_count:
+            if church.membership_count < 200:
+                reasons.append("Intimate")
+            elif church.membership_count <= 2000:
+                reasons.append("Mid-size")
+            else:
+                reasons.append("Large")
         
         return reasons
     
@@ -750,7 +766,7 @@ class AIEmbeddingService:
                     "gender": sermon.speaker.gender
                 },
                 "recommendation_score": speaker_score,
-                "matching_reason": f"AI detected {speaker_score:.1%} compatibility with your preferences"
+                "matching_reason": "Compatible"
             }
             recommendations.append(recommendation)
         

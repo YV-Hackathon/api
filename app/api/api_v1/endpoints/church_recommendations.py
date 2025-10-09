@@ -218,9 +218,9 @@ def _get_fallback_church_recommendations(user: models.User, db: Session, limit: 
             'service_times': church.service_times,
             'compatibility_score': 0.5 - (i * 0.05),  # Decreasing score
             'recommendation_reasons': [
-                "Matches your stated preferences from onboarding",
-                f"{church.denomination} church",
-                "Fallback recommendation (AI unavailable)"
+                "Preferred",
+                church.denomination if church.denomination else "Church",
+                "Fallback"
             ]
         }
         recommendations.append(recommendation)
