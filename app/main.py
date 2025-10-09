@@ -34,7 +34,7 @@ app.mount("/admin", admin_app)
 
 @app.get("/")
 async def root():
-    return {"message": "Church Management System API", "version": settings.VERSION}
+    return {"message": "PewPal API", "version": settings.VERSION}
 
 @app.get("/health")
 async def health_check():
