@@ -16,6 +16,7 @@ def get_sermons(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     speaker_id: Optional[int] = None,
+    is_clip: Optional[bool] = Query(None, description="Filter by clip status - true for clips, false for full sermons"),
     db: Session = Depends(get_db)
 ):
     """Get all sermons with optional filtering"""
@@ -23,6 +24,9 @@ def get_sermons(
     
     if speaker_id:
         query = query.filter(models.Sermon.speaker_id == speaker_id)
+    
+    if is_clip is not None:
+        query = query.filter(models.Sermon.is_clip == is_clip)
     
     sermons = query.offset(skip).limit(limit).all()
     return sermons
@@ -87,14 +91,23 @@ def delete_sermon(sermon_id: int, db: Session = Depends(get_db)):
     return {"message": "Sermon deleted successfully"}
 
 @router.get("/speaker/{speaker_id}/sermons", response_model=List[Sermon])
-def get_speaker_sermons(speaker_id: int, db: Session = Depends(get_db)):
+def get_speaker_sermons(
+    speaker_id: int, 
+    is_clip: Optional[bool] = Query(None, description="Filter by clip status - true for clips, false for full sermons"),
+    db: Session = Depends(get_db)
+):
     """Get all sermons for a specific speaker"""
     # Verify that the speaker exists
     speaker = db.query(models.Speaker).filter(models.Speaker.id == speaker_id).first()
     if not speaker:
         raise HTTPException(status_code=404, detail="Speaker not found")
     
-    sermons = db.query(models.Sermon).filter(models.Sermon.speaker_id == speaker_id).all()
+    query = db.query(models.Sermon).filter(models.Sermon.speaker_id == speaker_id)
+    
+    if is_clip is not None:
+        query = query.filter(models.Sermon.is_clip == is_clip)
+    
+    sermons = query.all()
     return sermons
 
 @router.get("/recommendations/{user_id}", response_model=SermonRecommendationsResponse)
@@ -135,9 +148,10 @@ def get_sermon_recommendations(
     recommended_speaker_ids = stored_recs.speaker_ids[:limit*2] if stored_recs.speaker_ids else []
     
     if recommended_speaker_ids:
-        # Get sermons from recommended speakers, ordered by recommendation score
+        # Get sermon clips from recommended speakers, ordered by recommendation score
         sermons_query = db.query(models.Sermon).join(models.Speaker).filter(
-            models.Speaker.id.in_(recommended_speaker_ids)
+            models.Speaker.id.in_(recommended_speaker_ids),
+            models.Sermon.is_clip == True  # Only return clips for recommendations
         )
         
         # Order by speaker recommendation score (if available)
@@ -217,7 +231,9 @@ def get_sermon_recommendations(
 
 def _get_fallback_sermon_recommendations(user, db: Session, limit: int) -> List[models.Sermon]:
     """Fallback sermon recommendations using basic preference matching."""
-    query = db.query(models.Sermon).join(models.Speaker)
+    query = db.query(models.Sermon).join(models.Speaker).filter(
+        models.Sermon.is_clip == True  # Only return clips for recommendations
+    )
     
     # Filter by user preferences
     if user.teaching_style_preference:
@@ -234,8 +250,10 @@ def _get_fallback_sermon_recommendations(user, db: Session, limit: int) -> List[
     
     sermons = query.limit(limit).all()
     
-    # If no matches, return any sermons
+    # If no matches, return any sermon clips
     if not sermons:
-        sermons = db.query(models.Sermon).join(models.Speaker).limit(limit).all()
+        sermons = db.query(models.Sermon).join(models.Speaker).filter(
+            models.Sermon.is_clip == True
+        ).limit(limit).all()
     
     return sermons

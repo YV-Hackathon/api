@@ -170,6 +170,7 @@ class SermonBase(BaseModel):
     title: str
     description: Optional[str] = None
     gcs_url: str
+    is_clip: bool = True
 
 class SermonCreate(SermonBase):
     speaker_id: int
@@ -178,6 +179,7 @@ class SermonUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     gcs_url: Optional[str] = None
+    is_clip: Optional[bool] = None
     speaker_id: Optional[int] = None
 
 class Sermon(SermonBase):
@@ -427,6 +429,32 @@ class ChurchRecommendationsResponse(BaseModel):
     recommendations: List[ChurchRecommendation]
     total_count: int
     user_preferences: Dict[str, Any]
+
+# FeaturedSermon schemas
+class FeaturedSermonBase(BaseModel):
+    church_id: int
+    sermon_id: int
+    sort_order: int = 0
+    is_active: bool = True
+
+class FeaturedSermonCreate(FeaturedSermonBase):
+    pass
+
+class FeaturedSermonUpdate(BaseModel):
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class FeaturedSermon(FeaturedSermonBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class FeaturedSermonWithDetails(FeaturedSermon):
+    church: Optional[Church] = None
+    sermon: Optional[SermonWithSpeaker] = None
 
 # Update forward references
 ChurchWithSpeakers.model_rebuild()

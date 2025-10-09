@@ -37,6 +37,7 @@ class Church(Base):
     # Relationships
     speakers = relationship("Speaker", back_populates="church")  # One-to-many (home church)
     speaking_pastors = relationship("Speaker", secondary=speaker_church_association, back_populates="speaking_churches")  # Many-to-many
+    featured_sermons = relationship("FeaturedSermon", back_populates="church")
 
 class Speaker(Base):
     __tablename__ = "speakers"
@@ -75,6 +76,7 @@ class Sermon(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     gcs_url = Column(String(500), nullable=False)  # URL to GCS bucket
+    is_clip = Column(Boolean, nullable=False, default=True)  # True for clips (onboarding), False for full sermons
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -83,6 +85,7 @@ class Sermon(Base):
     
     # Relationships
     speaker = relationship("Speaker", back_populates="sermons")
+    featured_in_churches = relationship("FeaturedSermon", back_populates="sermon")
 
 class User(Base):
     __tablename__ = "users"
@@ -138,4 +141,24 @@ class Recommendations(Base):
     # Unique constraint to prevent duplicate recommendations for same user
     __table_args__ = (
         UniqueConstraint('user_id', name='uq_user_recommendations'),
+    )
+
+class FeaturedSermon(Base):
+    __tablename__ = "featured_sermons"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    church_id = Column(Integer, ForeignKey("churches.id", ondelete="CASCADE"), nullable=False)
+    sermon_id = Column(Integer, ForeignKey("sermons.id", ondelete="CASCADE"), nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    church = relationship("Church", back_populates="featured_sermons")
+    sermon = relationship("Sermon", back_populates="featured_in_churches")
+    
+    # Unique constraint to prevent duplicate featured sermons for same church
+    __table_args__ = (
+        UniqueConstraint('church_id', 'sermon_id', name='uq_church_sermon_featured'),
     )
