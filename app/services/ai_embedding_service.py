@@ -290,8 +290,8 @@ class AIEmbeddingService:
         Returns:
             Stored Recommendations object
         """
-        speaker_ids = [rec[0] for rec in ai_recommendations]
-        scores = [rec[1] for rec in ai_recommendations]
+        speaker_ids = [int(rec[0]) for rec in ai_recommendations]
+        scores = [float(rec[1]) for rec in ai_recommendations]
         
         # Check if recommendations already exist for this user
         existing = db.query(models.Recommendations).filter(

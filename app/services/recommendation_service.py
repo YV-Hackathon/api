@@ -212,7 +212,7 @@ class MLRecommendationService:
         
         # Convert to (speaker_id, score) tuples and sort
         idx2speaker_id = {v: k for k, v in self.pastor2idx.items()}
-        results = [(idx2speaker_id[cand_idxs[i]], float(scores[i])) 
+        results = [(int(idx2speaker_id[cand_idxs[i]]), float(scores[i])) 
                    for i in range(len(cand_idxs))]
         
         return sorted(results, key=lambda x: x[1], reverse=True)
@@ -243,8 +243,8 @@ class MLRecommendationService:
         Returns:
             The stored Recommendations object
         """
-        speaker_ids = [rec[0] for rec in speaker_recommendations]
-        scores = [rec[1] for rec in speaker_recommendations]
+        speaker_ids = [int(rec[0]) for rec in speaker_recommendations]
+        scores = [float(rec[1]) for rec in speaker_recommendations]
         
         # Check if recommendations already exist for this user
         existing = db.query(models.Recommendations).filter(

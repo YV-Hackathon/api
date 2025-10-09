@@ -75,14 +75,14 @@ def update_user_recommendations(
         # Create new recommendations
         new_recommendations = models.Recommendations(
             user_id=user_id,
-            speaker_ids=recommendations_update.speaker_ids,
-            scores=recommendations_update.scores
+            speaker_ids=[int(sid) for sid in recommendations_update.speaker_ids],
+            scores=[float(score) for score in recommendations_update.scores] if recommendations_update.scores else None
         )
         db.add(new_recommendations)
     else:
         # Update existing recommendations
-        existing.speaker_ids = recommendations_update.speaker_ids
-        existing.scores = recommendations_update.scores
+        existing.speaker_ids = [int(sid) for sid in recommendations_update.speaker_ids]
+        existing.scores = [float(score) for score in recommendations_update.scores] if recommendations_update.scores else None
     
     db.commit()
     
