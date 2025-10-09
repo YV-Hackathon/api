@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from app.db.database import get_db
 from app.db import models
-from app.models.schemas import Speaker, SpeakerCreate, SpeakerUpdate, SpeakerWithChurch, Church
+from app.models.schemas import Speaker, SpeakerCreate, SpeakerUpdate, SpeakerWithChurch, Church, convert_speaker_data
 
 router = APIRouter()
 
@@ -36,8 +36,13 @@ def get_speakers(
     if environment_style:
         query = query.filter(models.Speaker.environment_style == environment_style)
     
-    speakers = query.offset(skip).limit(limit).all()
-    return speakers
+    speakers = query.options(joinedload(models.Speaker.church)).offset(skip).limit(limit).all()
+    # Convert speaker data to handle speaking_topics
+    converted_speakers = []
+    for speaker in speakers:
+        converted_data = convert_speaker_data(speaker)
+        converted_speakers.append(SpeakerWithChurch(**converted_data))
+    return converted_speakers
 
 @router.get("/{speaker_id}", response_model=SpeakerWithChurch)
 def get_speaker(speaker_id: int, db: Session = Depends(get_db)):

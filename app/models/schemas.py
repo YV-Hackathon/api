@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from typing import Optional, List, Dict, Any, Union
 from enum import Enum
 from datetime import datetime
+import json
 
 # Enums
 class TeachingStyle(str, Enum):
@@ -130,6 +131,7 @@ class SpeakerBase(BaseModel):
     gender: Optional[Gender] = None
     profile_picture_url: Optional[str] = None
     is_recommended: bool = False
+    
 
 class SpeakerCreate(SpeakerBase):
     church_id: Optional[int] = None
@@ -158,8 +160,7 @@ class Speaker(SpeakerBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class SpeakerWithChurch(Speaker):
     church: Optional[Church] = None
@@ -264,9 +265,48 @@ class ChurchFollowers(ChurchFollowersBase):
     class Config:
         from_attributes = True
 
+
 class ChurchFollowersWithDetails(ChurchFollowers):
     church: Optional[Church] = None
     user: Optional[User] = None
+
+# Simple conversion function for speakers
+def convert_speaker_data(speaker_data):
+    """Convert speaker data to handle speaking_topics conversion"""
+    if hasattr(speaker_data, '__dict__'):
+        data = speaker_data.__dict__.copy()
+    else:
+        data = speaker_data
+    
+    # Handle speaking_topics conversion
+    if 'speaking_topics' in data:
+        speaking_topics_raw = data['speaking_topics']
+        if speaking_topics_raw is None:
+            data['speaking_topics'] = []
+        elif isinstance(speaking_topics_raw, str):
+            try:
+                topics_data = json.loads(speaking_topics_raw)
+                if isinstance(topics_data, list):
+                    speaking_topics = []
+                    for topic_data in topics_data:
+                        if isinstance(topic_data, dict):
+                            speaking_topics.append(SpeakingTopic(**topic_data))
+                    data['speaking_topics'] = speaking_topics
+                else:
+                    data['speaking_topics'] = []
+            except (json.JSONDecodeError, TypeError, ValueError):
+                data['speaking_topics'] = []
+        elif isinstance(speaking_topics_raw, list):
+            # Already a list, convert each item to SpeakingTopic
+            speaking_topics = []
+            for topic_data in speaking_topics_raw:
+                if isinstance(topic_data, dict):
+                    speaking_topics.append(SpeakingTopic(**topic_data))
+            data['speaking_topics'] = speaking_topics
+        else:
+            data['speaking_topics'] = []
+    
+    return data
 
 # Speaker Followers schemas
 class SpeakerFollowersBase(BaseModel):

@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.db.database import SessionLocal, engine
 from app.db.models import Church, Speaker
-from app.models.schemas import TeachingStyle, BibleApproach, EnvironmentStyle, Gender
+from app.models.schemas import TeachingStyle, BibleApproach, EnvironmentStyle, Gender, SpeakingTopic, TopicCategory
 
 def parse_json_field(json_str: str) -> Optional[dict]:
     """Parse JSON string field, return None if empty or invalid."""
@@ -39,6 +39,50 @@ def parse_enum_field(enum_class, value: str) -> Optional[object]:
     except ValueError:
         print(f"Warning: Invalid enum value '{value}' for {enum_class.__name__}")
         return None
+
+def parse_speaking_topics(json_str: str) -> List[SpeakingTopic]:
+    """Parse speaking topics from JSON string, return empty list if empty or invalid."""
+    if not json_str or json_str.strip() == "":
+        return []
+    
+    try:
+        topics_data = json.loads(json_str)
+        if not isinstance(topics_data, list):
+            print(f"Warning: speaking_topics should be a list, got {type(topics_data)}")
+            return []
+        
+        speaking_topics = []
+        for topic_data in topics_data:
+            if isinstance(topic_data, dict):
+                # Handle both old format (string) and new format (object)
+                if isinstance(topic_data.get('name'), str):
+                    name = topic_data['name']
+                    description = topic_data.get('description')
+                    category_str = topic_data.get('category', 'OTHER')
+                    
+                    try:
+                        category = TopicCategory(category_str)
+                        speaking_topics.append(SpeakingTopic(
+                            name=name,
+                            description=description,
+                            category=category
+                        ))
+                    except ValueError:
+                        print(f"Warning: Invalid topic category '{category_str}', using OTHER")
+                        speaking_topics.append(SpeakingTopic(
+                            name=name,
+                            description=description,
+                            category=TopicCategory.OTHER
+                        ))
+                else:
+                    print(f"Warning: Invalid topic data format: {topic_data}")
+            else:
+                print(f"Warning: Topic data should be a dict, got {type(topic_data)}")
+        
+        return speaking_topics
+    except json.JSONDecodeError:
+        print(f"Warning: Could not parse speaking_topics JSON: {json_str}")
+        return []
 
 def load_churches_safe(db: Session, csv_file: str) -> Dict[str, int]:
     """Load churches from CSV, updating existing or creating new ones."""
@@ -137,7 +181,7 @@ def load_speakers_safe(db: Session, csv_file: str, church_name_to_id: Dict[str, 
             try:
                 # Parse JSON fields
                 social_media = parse_json_field(row.get('social_media', ''))
-                speaking_topics = parse_json_field(row.get('speaking_topics', ''))
+                speaking_topics = parse_speaking_topics(row.get('speaking_topics', ''))
                 
                 # Parse enum fields
                 teaching_style = parse_enum_field(TeachingStyle, row.get('teaching_style', ''))
