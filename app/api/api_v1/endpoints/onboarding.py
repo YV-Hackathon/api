@@ -209,7 +209,8 @@ def get_recommended_sermons_from_speakers(speakers: List[models.Speaker], db: Se
     sermons_query = db.query(models.Sermon).options(
         joinedload(models.Sermon.speaker).joinedload(models.Speaker.church)
     ).filter(
-        models.Sermon.speaker_id.in_(speaker_ids)
+        models.Sermon.speaker_id.in_(speaker_ids),
+        models.Sermon.is_clip == True
     ).order_by(models.Sermon.created_at.desc())
     
     # Get the sermons with speaker and church data
@@ -223,7 +224,8 @@ def get_recommended_sermons_from_speakers(speakers: List[models.Speaker], db: Se
         additional_sermons = db.query(models.Sermon).options(
             joinedload(models.Sermon.speaker).joinedload(models.Speaker.church)
         ).filter(
-            ~models.Sermon.id.in_(existing_sermon_ids)
+            ~models.Sermon.id.in_(existing_sermon_ids),
+            models.Sermon.is_clip == True
         ).order_by(models.Sermon.created_at.desc()).limit(additional_needed).all()
         
         sermons.extend(additional_sermons)
