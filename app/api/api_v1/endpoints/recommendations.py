@@ -33,7 +33,7 @@ def generate_recommendations(
         }
     
     # Generate speaker recommendations
-    speaker_recs = ml_service.generate_recommendations(preferences, limit=20)
+    speaker_recs = ml_service.generate_recommendations(preferences, limit=20, db=db)
     
     # Store the recommendations
     stored_recs = ml_service.store_recommendations(db, user_id, speaker_recs)

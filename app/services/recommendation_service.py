@@ -79,7 +79,8 @@ class MLRecommendationService:
         self, 
         user_preferences: Dict, 
         user_swipes: List[Dict] = None,
-        limit: int = 10
+        limit: int = 10,
+        db: Session = None
     ) -> List[Tuple[int, float]]:
         """Generate speaker recommendations for a user.
         
@@ -87,12 +88,13 @@ class MLRecommendationService:
             user_preferences: Dictionary containing user's trait preferences
             user_swipes: List of user's previous swipes/ratings (optional)
             limit: Maximum number of recommendations to return
+            db: Database session to filter speakers with sermons
             
         Returns:
             List of tuples (speaker_id, confidence_score)
         """
         if not self.model_loaded:
-            return self._get_fallback_recommendations(limit)
+            return self._get_fallback_recommendations(limit, db)
         
         try:
             # This is a simplified version of your query_model.py logic
@@ -114,7 +116,7 @@ class MLRecommendationService:
             q = (1 - alpha) * u + alpha * p
             
             # Score all candidates
-            candidate_scores = self._score_candidates(q, user_swipes or [])
+            candidate_scores = self._score_candidates(q, user_swipes or [], db)
             
             # Return top K recommendations
             top_k = min(limit, len(candidate_scores))
@@ -122,7 +124,7 @@ class MLRecommendationService:
             
         except Exception as e:
             print(f"Error generating ML recommendations: {e}")
-            return self._get_fallback_recommendations(limit)
+            return self._get_fallback_recommendations(limit, db)
     
     def _traits_to_trait_ids(self, traits: List[str]) -> List[int]:
         """Convert trait names to trait IDs."""
@@ -173,16 +175,29 @@ class MLRecommendationService:
         
         return v_like - 0.5 * v_dis
     
-    def _score_candidates(self, query_vector: torch.Tensor, user_swipes: List[Dict]) -> List[Tuple[int, float]]:
+    def _score_candidates(self, query_vector: torch.Tensor, user_swipes: List[Dict], db: Session = None) -> List[Tuple[int, float]]:
         """Score all candidate speakers against the query vector."""
         device = query_vector.device
         
         # Get already-swiped speaker IDs
         swiped_ids = {int(s.get('speaker_id', 0)) for s in user_swipes}
         
-        # Get candidate indices (exclude already swiped)
-        cand_idxs = [idx for speaker_id, idx in self.pastor2idx.items() 
-                     if speaker_id not in swiped_ids]
+        # Get speakers with sermons if DB session provided
+        speakers_with_sermons = set()
+        if db:
+            from app.db import models
+            speakers_with_sermons_query = db.query(models.Speaker.id).join(models.Sermon).distinct()
+            speakers_with_sermons = {speaker.id for speaker in speakers_with_sermons_query.all()}
+            print(f"🎯 ML: Found {len(speakers_with_sermons)} speakers with sermons")
+        
+        # Get candidate indices (exclude already swiped and speakers without sermons)
+        cand_idxs = []
+        for speaker_id, idx in self.pastor2idx.items():
+            if speaker_id in swiped_ids:
+                continue
+            if db and speakers_with_sermons and speaker_id not in speakers_with_sermons:
+                continue
+            cand_idxs.append(idx)
         
         if not cand_idxs:
             return []
@@ -217,15 +232,31 @@ class MLRecommendationService:
         
         return sorted(results, key=lambda x: x[1], reverse=True)
     
-    def _get_fallback_recommendations(self, limit: int) -> List[Tuple[int, float]]:
+    def _get_fallback_recommendations(self, limit: int, db: Session = None) -> List[Tuple[int, float]]:
         """Generate fallback recommendations when ML model is not available."""
-        # Return mock recommendations - in production, you might want to use simple heuristics
-        # based on speaker popularity, user preferences, etc.
-        mock_recommendations = [
-            (1, 0.95), (2, 0.92), (3, 0.89), (4, 0.87), (5, 0.85),
-            (6, 0.83), (7, 0.81), (8, 0.79), (9, 0.77), (10, 0.75)
-        ]
-        return mock_recommendations[:limit]
+        if db:
+            # Get speakers with sermons for realistic fallback
+            from app.db import models
+            speakers_with_sermons = db.query(models.Speaker.id).join(models.Sermon).filter(
+                models.Speaker.is_recommended == True
+            ).distinct().limit(limit).all()
+            
+            fallback_recs = []
+            for i, speaker in enumerate(speakers_with_sermons):
+                # Assign decreasing scores
+                score = 0.95 - (i * 0.05)
+                fallback_recs.append((speaker.id, max(score, 0.5)))
+            
+            print(f"🔄 Generated {len(fallback_recs)} fallback recommendations with sermons")
+            return fallback_recs
+        else:
+            # Return mock recommendations - in production, you might want to use simple heuristics
+            # based on speaker popularity, user preferences, etc.
+            mock_recommendations = [
+                (1, 0.95), (2, 0.92), (3, 0.89), (4, 0.87), (5, 0.85),
+                (6, 0.83), (7, 0.81), (8, 0.79), (9, 0.77), (10, 0.75)
+            ]
+            return mock_recommendations[:limit]
     
     def store_recommendations(
         self, 

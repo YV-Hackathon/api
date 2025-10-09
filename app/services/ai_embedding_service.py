@@ -228,7 +228,8 @@ class AIEmbeddingService:
         user: models.User, 
         selected_speakers: List[str] = None,
         limit: int = 10,
-        force_refresh: bool = False
+        force_refresh: bool = False,
+        db: Session = None
     ) -> List[Tuple[int, float]]:
         """Get AI-powered speaker recommendations based on user preferences
         
@@ -237,6 +238,7 @@ class AIEmbeddingService:
             selected_speakers: List of speaker names selected by user
             limit: Maximum number of recommendations
             force_refresh: Force regeneration even if cached
+            db: Database session to filter speakers with sermons
         
         Returns:
             List of (speaker_id, similarity_score) tuples
@@ -256,9 +258,20 @@ class AIEmbeddingService:
             user_text = self.prepare_user_preference_text(user, selected_speakers)
             user_embedding = self.model.encode(user_text)
             
+            # Get speakers who have sermons (if db session provided)
+            speakers_with_sermons = set()
+            if db:
+                speakers_with_sermons_query = db.query(models.Speaker.id).join(models.Sermon).distinct()
+                speakers_with_sermons = {speaker.id for speaker in speakers_with_sermons_query.all()}
+                print(f"🎯 Found {len(speakers_with_sermons)} speakers with sermons")
+            
             # Calculate similarities with all speakers
             similarities = []
             for speaker_id, speaker_embedding in self.speaker_embeddings.items():
+                # Skip speakers without sermons if we have DB access
+                if db and speakers_with_sermons and speaker_id not in speakers_with_sermons:
+                    continue
+                    
                 similarity = cosine_similarity([user_embedding], [speaker_embedding])[0][0]
                 similarities.append((speaker_id, float(similarity)))
             
@@ -392,9 +405,20 @@ class AIEmbeddingService:
             )
             user_embedding = self.model.encode(user_text)
             
+            # Get speakers who have sermons (if db session provided)
+            speakers_with_sermons = set()
+            if db:
+                speakers_with_sermons_query = db.query(models.Speaker.id).join(models.Sermon).distinct()
+                speakers_with_sermons = {speaker.id for speaker in speakers_with_sermons_query.all()}
+                print(f"🎯 Found {len(speakers_with_sermons)} speakers with sermons")
+            
             # Calculate similarities with all speakers
             similarities = []
             for speaker_id, speaker_embedding in self.speaker_embeddings.items():
+                # Skip speakers without sermons if we have DB access
+                if db and speakers_with_sermons and speaker_id not in speakers_with_sermons:
+                    continue
+                
                 similarity = cosine_similarity([user_embedding], [speaker_embedding])[0][0]
                 
                 # Apply learning boost/penalty based on user ratings
