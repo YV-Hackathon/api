@@ -54,8 +54,20 @@ def get_church_featured_sermons(
                 "name": fs.church.name,
                 "denomination": fs.church.denomination,
                 "description": fs.church.description,
+                "address": fs.church.address,
+                "phone": fs.church.phone,
+                "email": fs.church.email,
+                "website": fs.church.website,
+                "founded_year": fs.church.founded_year,
+                "membership_count": fs.church.membership_count,
+                "service_times": fs.church.service_times,
+                "social_media": fs.church.social_media,
                 "image_url": fs.church.image_url,
-                "is_active": fs.church.is_active
+                "attributes": fs.church.attributes,
+                "is_active": fs.church.is_active,
+                "sort_order": fs.church.sort_order,
+                "created_at": fs.church.created_at,
+                "updated_at": fs.church.updated_at
             } if fs.church else None,
             "sermon": {
                 "id": fs.sermon.id,
@@ -71,12 +83,22 @@ def get_church_featured_sermons(
                     "name": fs.sermon.speaker.name,
                     "title": fs.sermon.speaker.title,
                     "bio": fs.sermon.speaker.bio,
+                    "email": fs.sermon.speaker.email,
+                    "phone": fs.sermon.speaker.phone,
+                    "years_of_service": fs.sermon.speaker.years_of_service,
+                    "social_media": fs.sermon.speaker.social_media,
+                    "speaking_topics": fs.sermon.speaker.speaking_topics,
+                    "sort_order": fs.sermon.speaker.sort_order,
                     "profile_picture_url": fs.sermon.speaker.profile_picture_url,
                     "teaching_style": fs.sermon.speaker.teaching_style,
                     "bible_approach": fs.sermon.speaker.bible_approach,
                     "environment_style": fs.sermon.speaker.environment_style,
                     "gender": fs.sermon.speaker.gender,
-                    "is_recommended": fs.sermon.speaker.is_recommended
+                    "attributes": fs.sermon.speaker.attributes,
+                    "is_recommended": fs.sermon.speaker.is_recommended,
+                    "church_id": fs.sermon.speaker.church_id,
+                    "created_at": fs.sermon.speaker.created_at,
+                    "updated_at": fs.sermon.speaker.updated_at
                 } if fs.sermon.speaker else None
             } if fs.sermon else None
         }
@@ -206,8 +228,20 @@ def get_all_featured_sermons(
                 "name": fs.church.name,
                 "denomination": fs.church.denomination,
                 "description": fs.church.description,
+                "address": fs.church.address,
+                "phone": fs.church.phone,
+                "email": fs.church.email,
+                "website": fs.church.website,
+                "founded_year": fs.church.founded_year,
+                "membership_count": fs.church.membership_count,
+                "service_times": fs.church.service_times,
+                "social_media": fs.church.social_media,
                 "image_url": fs.church.image_url,
-                "is_active": fs.church.is_active
+                "attributes": fs.church.attributes,
+                "is_active": fs.church.is_active,
+                "sort_order": fs.church.sort_order,
+                "created_at": fs.church.created_at,
+                "updated_at": fs.church.updated_at
             } if fs.church else None,
             "sermon": {
                 "id": fs.sermon.id,
@@ -223,12 +257,22 @@ def get_all_featured_sermons(
                     "name": fs.sermon.speaker.name,
                     "title": fs.sermon.speaker.title,
                     "bio": fs.sermon.speaker.bio,
+                    "email": fs.sermon.speaker.email,
+                    "phone": fs.sermon.speaker.phone,
+                    "years_of_service": fs.sermon.speaker.years_of_service,
+                    "social_media": fs.sermon.speaker.social_media,
+                    "speaking_topics": fs.sermon.speaker.speaking_topics,
+                    "sort_order": fs.sermon.speaker.sort_order,
                     "profile_picture_url": fs.sermon.speaker.profile_picture_url,
                     "teaching_style": fs.sermon.speaker.teaching_style,
                     "bible_approach": fs.sermon.speaker.bible_approach,
                     "environment_style": fs.sermon.speaker.environment_style,
                     "gender": fs.sermon.speaker.gender,
-                    "is_recommended": fs.sermon.speaker.is_recommended
+                    "attributes": fs.sermon.speaker.attributes,
+                    "is_recommended": fs.sermon.speaker.is_recommended,
+                    "church_id": fs.sermon.speaker.church_id,
+                    "created_at": fs.sermon.speaker.created_at,
+                    "updated_at": fs.sermon.speaker.updated_at
                 } if fs.sermon.speaker else None
             } if fs.sermon else None
         }
