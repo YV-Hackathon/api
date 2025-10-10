@@ -671,7 +671,7 @@ class AIEmbeddingService:
         
         # Check if user liked speakers from this church
         if church.id in liked_church_ids:
-            reasons.append("Familiar")
+            reasons.append("Liked")
         
         # Check preference alignments
         church_speakers = db.query(models.Speaker).filter(
