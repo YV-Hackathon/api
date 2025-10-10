@@ -7,7 +7,6 @@ import torch
 import pandas as pd
 import torch.nn.functional as F
 
-from utils.save_or_load import load_artifacts
 from utils.model import build_mappings
 
 from sqlalchemy.orm import Session
@@ -16,6 +15,42 @@ from app.db import models
 import re
 import unicodedata
 
+
+def load_artifacts(ckpt_dir: Path):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    ckpt_dir = ckpt_dir.resolve()
+    ckpt = torch.load(ckpt_dir / "checkpoint.pt", map_location=device, weights_only=False)
+
+    # Load encoders first to get correct dimensions
+    user_enc  = joblib.load(ckpt_dir / "user_encoder.pkl")
+    pastor_enc = joblib.load(ckpt_dir / "pastor_encoder.pkl")
+    
+    # Debug: Check what's in the checkpoint
+    print("Checkpoint keys:", list(ckpt.keys()))
+    print("n_users:", ckpt.get("n_users"))
+    print("n_pastors:", ckpt.get("n_pastors")) 
+    print("n_traits:", ckpt.get("n_traits"))
+    print("d:", ckpt.get("d"))
+    
+    model = RecSysModelFA(
+        n_user=ckpt["n_users"],
+        n_pastors=ckpt["n_pastors"],
+        n_traits=ckpt["n_traits"],
+        d=ckpt["d"],
+    ).to(device)
+
+    model.load_state_dict(ckpt["model_state_dict"])
+    model.eval()
+
+    user_enc  = joblib.load(ckpt_dir / "user_encoder.pkl")
+    pastor_enc = joblib.load(ckpt_dir / "pastor_encoder.pkl")
+    pastor_trait_ids = joblib.load(ckpt_dir / "pastor_trait_ids.pkl")
+
+    R_MIN = ckpt.get("rating_min", None)
+    R_MAX = ckpt.get("rating_max", None)
+
+    return model, user_enc, pastor_enc, pastor_trait_ids, R_MIN, R_MAX
 
 def _normalize_text(s: str) -> str:
     s = unicodedata.normalize('NFKC', s)
