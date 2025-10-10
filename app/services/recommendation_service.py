@@ -13,6 +13,7 @@ from typing import List, Dict, Tuple, Optional
 from sqlalchemy.orm import Session
 from app.db import models
 from app.models.schemas import User
+from model.inference_service import get_model_service
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -455,14 +456,28 @@ def trigger_recommendation_update(user_id: int, db: Session) -> bool:
         }
         
         logger.debug(f"User preferences: {user_preferences}")
-        
-        # Generate new recommendations using ML model with user swipes
-        ml_service = get_ml_service()
+
+        JSON_INPUT = {
+            "trait_choices": [
+                "Gender::Female pastor",
+                "Preaching method::Topical",
+                "Theological tradition::Mixed",
+                "Women in leadership::Egalitarian",
+            ],
+            "swipes": [
+                {"pastorName": "AndyStanley,", "pastorId": 44, "rating": 5},
+                {"pastorName": "RickWarren", "pastorId": 45, "rating": 4},
+                {"pastorName": "JohnPiper", "pastorId": 48, "rating": 2},
+            ],
+        }
+
+        user_preferences = {"trait_choices": JSON_INPUT.get("trait_choices", [])}
+        user_swipes = [{"speaker_id": s.get("pastorId"), "rating": float(s.get("rating", 0))} for s in JSON_INPUT.get("swipes", [])]
+        ml_service = get_model_service()
         speaker_recs = ml_service.generate_recommendations(
             user_preferences=user_preferences,
             user_swipes=user_swipes,
-            limit=20,
-            db=db
+            limit=20
         )
         
         # Store the updated recommendations

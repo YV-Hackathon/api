@@ -26,14 +26,14 @@ def main() -> None:
     recs = svc.generate_recommendations(
         user_preferences=user_preferences,
         user_swipes=user_swipes,
-        limit=10,
+        limit=2,
     )
     print("Basic:", recs)
 
     detailed = svc.generate_recommendations_detailed(
         user_preferences=user_preferences,
         user_swipes=user_swipes,
-        limit=5,
+        limit=2,
     )
     print("Detailed:", detailed)
 

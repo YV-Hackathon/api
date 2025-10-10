@@ -10,6 +10,8 @@ import torch.nn.functional as F
 from utils.save_or_load import load_artifacts
 from utils.model import build_mappings
 
+from sqlalchemy.orm import Session
+from app.db import models
 # ---- Trait validation utilities (aligned with query_model) ----
 import re
 import unicodedata
@@ -227,6 +229,48 @@ class ModelInferenceService:
             print(f"Error during detailed inference: {e}")
             return []
 
+    def store_recommendations(
+        self, 
+        db: Session, 
+        user_id: int, 
+        speaker_recommendations: List[Tuple[int, float]]
+    ) -> models.Recommendations:
+        """Store speaker recommendations in the database.
+        
+        Args:
+            db: Database session
+            user_id: User ID
+            speaker_recommendations: List of (speaker_id, score) tuples
+            
+        Returns:
+            The stored Recommendations object
+        """
+        speaker_ids = [int(rec[0]) for rec in speaker_recommendations]
+        scores = [float(rec[1]) for rec in speaker_recommendations]
+        
+        # Check if recommendations already exist for this user
+        existing = db.query(models.Recommendations).filter(
+            models.Recommendations.user_id == user_id
+        ).first()
+        
+        if existing:
+            # Update existing recommendations
+            existing.speaker_ids = speaker_ids
+            existing.scores = scores
+            db.commit()
+            db.refresh(existing)
+            return existing
+        else:
+            # Create new recommendations
+            new_recommendations = models.Recommendations(
+                user_id=user_id,
+                speaker_ids=speaker_ids,
+                scores=scores
+            )
+            db.add(new_recommendations)
+            db.commit()
+            db.refresh(new_recommendations)
+            return new_recommendations
     # ---------- Internal helpers ----------
     def _traits_to_trait_ids(self, traits: List[str]) -> List[int]:
         """Resolve trait selections to trained IDs when training used value-only tokens.
