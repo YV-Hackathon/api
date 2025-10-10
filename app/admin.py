@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from sqladmin import Admin, ModelView
 from app.db.database import engine
-from app.db.models import Church, Speaker, User, UserSpeakerPreference, OnboardingQuestion
+from app.db.models import Church, Speaker, User, UserSpeakerPreference, OnboardingQuestion, Sermon, UserSermonPreference, FeaturedSermon
 
 def create_admin_app() -> FastAPI:
     """Create a FastAPI admin interface for database management."""
@@ -45,12 +45,34 @@ def create_admin_app() -> FastAPI:
         column_list = [OnboardingQuestion.id, OnboardingQuestion.created_at, OnboardingQuestion.updated_at]
         column_sortable_list = [OnboardingQuestion.id, OnboardingQuestion.created_at]
     
+    class SermonAdmin(ModelView, model=Sermon):
+        icon = "fa-solid fa-video"
+        column_list = [Sermon.id, Sermon.title, Sermon.speaker_id, Sermon.is_clip, Sermon.created_at]
+        column_searchable_list = [Sermon.title, Sermon.description]
+        column_sortable_list = [Sermon.id, Sermon.title, Sermon.created_at]
+        column_details_list = [Sermon.id, Sermon.title, Sermon.description, Sermon.gcs_url, Sermon.is_clip, Sermon.speaker_id, Sermon.created_at, Sermon.updated_at]
+    
+    class UserSermonPreferenceAdmin(ModelView, model=UserSermonPreference):
+        icon = "fa-solid fa-thumbs-up"
+        column_list = [UserSermonPreference.id, UserSermonPreference.user_id, UserSermonPreference.sermon_id, UserSermonPreference.preference, UserSermonPreference.created_at]
+        column_searchable_list = [UserSermonPreference.preference]
+        column_sortable_list = [UserSermonPreference.id, UserSermonPreference.created_at]
+    
+    class FeaturedSermonAdmin(ModelView, model=FeaturedSermon):
+        icon = "fa-solid fa-star"
+        column_list = [FeaturedSermon.id, FeaturedSermon.church_id, FeaturedSermon.sermon_id, FeaturedSermon.sort_order, FeaturedSermon.is_active, FeaturedSermon.created_at]
+        column_searchable_list = [FeaturedSermon.church_id, FeaturedSermon.sermon_id]
+        column_sortable_list = [FeaturedSermon.id, FeaturedSermon.sort_order, FeaturedSermon.created_at]
+    
     # Register admin views
     admin.add_view(ChurchAdmin)
     admin.add_view(SpeakerAdmin)
     admin.add_view(UserAdmin)
     admin.add_view(UserSpeakerPreferenceAdmin)
     admin.add_view(OnboardingQuestionAdmin)
+    admin.add_view(SermonAdmin)
+    admin.add_view(UserSermonPreferenceAdmin)
+    admin.add_view(FeaturedSermonAdmin)
     
     return admin_app
 
