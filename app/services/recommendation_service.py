@@ -24,8 +24,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'model'))
 
 try:
-    from utils.save_or_load import load_artifacts
-    from utils.model import build_mappings
+    from model.utils.save_or_load import load_artifacts
+    from model.utils.model import build_mappings
     import pandas as pd
 except ImportError:
     # Fallback for development/testing when model artifacts aren't available
