@@ -3,14 +3,14 @@ from inference_service import get_model_service
 
 JSON_INPUT = {
     "trait_choices": [
-        "Gender::Female pastor",
+        "Gender::Male pastor",
         "Preaching method::Topical",
         "Theological tradition::Mixed",
         "Women in leadership::Egalitarian",
     ],
     "swipes": [
         {"pastorName": "AndyStanley,", "pastorId": 44, "rating": 5},
-        {"pastorName": "RickWarren", "pastorId": 45, "rating": 4},
+        {"pastorName": "RickWarren", "pastorId": 43, "rating": 4},
         {"pastorName": "JohnPiper", "pastorId": 48, "rating": 2},
     ],
 }

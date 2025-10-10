@@ -4,6 +4,9 @@ from typing import List, Optional
 from app.db.database import get_db
 from app.db import models
 from app.services.ai_embedding_service import get_ai_service
+from model.inference_service import get_model_service
+from collections import defaultdict
+
 
 router = APIRouter()
 
@@ -52,8 +55,48 @@ def get_church_recommendations(
             detail=f"User needs at least {min_ratings} sermon ratings before getting church recommendations. Current: {rating_count}"
         )
     
+    user_preferences = {
+        "trait_choices": [],  # you can map user fields to trait strings if desired
+    }
+
+    # Build user_swipes from DB (thumbs_up => 5.0, thumbs_down => 2.0)
+    prefs = db.query(models.UserSermonPreference).join(models.Sermon).filter(
+        models.UserSermonPreference.user_id == user_id
+    ).all()
+
+    user_swipes = []
+    for pref in prefs:
+        # Ensure sermon and speaker exists
+        if not pref.sermon or not pref.sermon.speaker_id:
+            continue
+        rating = 5.0 if pref.preference == "thumbs_up" else 2.0
+        user_swipes.append({
+            "speaker_id": pref.sermon.speaker_id,
+            "rating": rating,
+            "sermon_id": pref.sermon_id,
+        })
+
+    agg = defaultdict(list)
+    for pref in prefs:
+        if not pref.sermon or not pref.sermon.speaker_id:
+            continue
+        rating = 5.0 if pref.preference == "thumbs_up" else 2.0
+        agg[pref.sermon.speaker_id].append((pref.sermon_id, rating))
+
+    user_swipes = []
+    for speaker_id, items in agg.items():
+        # average rating across this speaker’s sermons
+        avg_rating = sum(r for _, r in items) / len(items)
+        # keep one representative sermon_id (or drop if you don’t need it)
+        any_sermon_id = items[0][0]
+        user_swipes.append({
+            "speaker_id": int(speaker_id),
+            "rating": float(avg_rating),
+            "sermon_id": int(any_sermon_id),
+        })
+
     # Get AI-powered church recommendations
-    ai_service = get_ai_service()
+    ai_service = get_model_service()
     
     if not ai_service.is_available():
         raise HTTPException(
@@ -63,7 +106,7 @@ def get_church_recommendations(
     
     try:
         # Use AI embeddings for church recommendations
-        church_recommendations = ai_service.get_church_recommendations(user, db, limit)
+        church_recommendations = ai_service.generate_recommendations(user_preferences,user_swipes, limit)
         
         if not church_recommendations:
             # Fallback to basic recommendations if AI fails
