@@ -10,7 +10,7 @@ on:
       - 'Dockerfile.dev'
 
 env:
-  PROJECT_ID: gloo-hackathon-472520
+  PROJECT_ID: gloo-hackathon
   GAR_LOCATION: us-central1
   REPOSITORY: fastapi-cms-dev
   SERVICE: fastapi-cms
